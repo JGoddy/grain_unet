@@ -13,3 +13,5 @@ venv/
 hdf5_dump
 **.h5
 **/desktop.ini
+test_data/
+test_data.zip
