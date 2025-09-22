@@ -42,8 +42,8 @@ def train(model:unet.UNet=MODEL_PARAMS, image_path=IMAGE_PATH, label_path=LABEL_
     plot_loss_points(train_losses, val_losses)
     print("Training complete.")
 
-
-train()
+# uncomment out to run from the command line
+#train()
 
 
 

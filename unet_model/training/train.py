@@ -9,6 +9,7 @@ import tqdm
 import torch 
 from utility.settings import *
 from utility.plotting import *
+import datetime
 init_training()
 
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
@@ -28,7 +29,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         train_losses.append(loss.item())
         #saves model params after a certain amount of epochs 
         if epoch % SAVING_RATE == 0: 
-            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}.pth')
+            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
        
     #validation step
    
