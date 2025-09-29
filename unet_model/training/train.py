@@ -28,8 +28,10 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)        
         train_losses.append(loss.item())
         #saves model params after a certain amount of epochs 
-        if epoch % SAVING_RATE == 0: 
-            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
+
+        # these should be out of the loop so it doesn't save after every batch. JGoddy moved them below 
+        # if epoch % SAVING_RATE == 0: 
+        #     torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
        
     #validation step
    
@@ -52,6 +54,9 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     print(f"Training Loss: {train_loss}")
     print(f"Validation Loss: {val_loss}")
 
+    if epoch % SAVING_RATE == 0: 
+            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
+       
 
     return train_loss, val_loss
 
@@ -77,6 +82,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device=DEVICE_CO
         loss = loss_fn(outputs, batch_labels)
         return loss, outputs
 
+# I don't think this function gets used 
 def save_model(model, num_epochs=-1, epoch=-1):
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{epoch}.pth')
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{num_epochs}.pth')

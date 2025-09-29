@@ -32,7 +32,7 @@ if __name__ == "__main__":
            
         elif args.mode == "post_process":
             print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
-            bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = f'fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/', post_process_option=True)
+            bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = f'fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}_2/', post_process_option=True)
         else:
             print("Invalid mode. Use 'in situ' or 'post process'.")
             sys.exit(1)

@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-def plot_loss_points(loss_points_training, loss_point_validation, interimloss_point=None, filename_training='lossPlotTraining.png',filename_validation='lossPlotValidation'):
+import datetime
+
+def plot_loss_points(loss_points_training, loss_point_validation, interimloss_point=None, filename_training='lossPlotTraining_'+datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")+'.png',filename_validation='lossPlotValidation_'+datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")+'.png'):
     '''
 Function that takes in an array of loss function values and exports a png at the end of the session
 '''
