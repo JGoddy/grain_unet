@@ -18,30 +18,25 @@ init_training()
 def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch):
     
     model.train(True) 
-    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Training") 
     train_losses = []
     val_losses = []
 
+    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Training") 
 
     for images,labels, names in tqdm_train_dataloader: 
 
         loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)        
         train_losses.append(loss.item())
-        #saves model params after a certain amount of epochs 
 
-        # these should be out of the loop so it doesn't save after every batch. JGoddy moved them below 
-        # if epoch % SAVING_RATE == 0: 
-        #     torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
-       
-    #validation step
+
+    #saves model params after a certain amount of epochs 
     if epoch % SAVING_RATE == 0: 
             torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
        
 
-
+        #validation step
     tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Validation")
 
-    
     with torch.no_grad():
         for images, labels, names in tqdm_val_dataloader:
             loss, vlaidation_outputs = validation_step(images, labels, model, loss_fn, device)
