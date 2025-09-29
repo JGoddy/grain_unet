@@ -34,7 +34,11 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         #     torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
        
     #validation step
-   
+    if epoch % SAVING_RATE == 0: 
+            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
+       
+
+
     tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Validation")
 
     
@@ -54,9 +58,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     print(f"Training Loss: {train_loss}")
     print(f"Validation Loss: {val_loss}")
 
-    if epoch % SAVING_RATE == 0: 
-            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
-       
+    
 
     return train_loss, val_loss
 
