@@ -160,7 +160,8 @@ def load_model_weights(model_path:str|Path|UNet, device:str = DEVICE_COMPUTE_PLA
             try:
                 model.load_state_dict(torch.load(model_path, map_location=device))
             except:
-                Warning('Could not load provided state_dict. Model will be initialized with random weights.')
+                raise ValueError('Could not load provided state_dict. Model cannot be initialized. Check if the model path is correct.')
+
                 
         model.to(device)
         model.eval()  # Set the model to evaluation mode
