@@ -18,7 +18,7 @@ from scipy.ndimage import label, center_of_mass
 import cv2
 import math
 from analysis.analyze_distributions.analyze_distributions import GrainDataset, compare_distributions, plot_distros
-from objective_functions.validation_functions import get_objectives
+from analysis.objective_functions.validation_functions import get_objectives
 from skimage import morphology
 from skimage.segmentation import clear_border
 import skimage.io as io
@@ -185,7 +185,7 @@ def compute_grain_stats_and_save_summary(output_dir, summary_csv_path, saving = 
         print(f"Summary CSV saved to {summary_csv_path}")
     return summary_df
 
-def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov_size = 1):
+def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov_size = 1, background = 'white'):
     os.makedirs(output_dir, exist_ok=True)
 
     # Collect datasets from processed images
@@ -203,14 +203,19 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
             if measure:
                 # Calculate grain areas and centroids for each image
                 if "centroids" not in str(file):
-                    df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, fov_size=fov_size)
+                    try:
+                        df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, background = background, fov_size=fov_size)
+                    except:
+                        print(f'Error loading image {image_path}')
+                        continue
+                        #Exception('bad folder, no diameters in files or images. try changing to measurement mode.')
             elif f'{Path(file).stem}_grain_areas_and_centroids.csv' in os.listdir(input_dir):  
                 print('Found diameters in text file')
                 ref_areas, ref_centroids = read_diameters(os.path.join(input_dir, f'{Path(file).stem}_grain_areas_and_centroids.csv'))
             else:
                 try:
                     if "centroids" not in str(file):
-                        df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, fov_size=fov_size)
+                        df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, background = background, fov_size=fov_size)
 
                 except:
                     Exception('bad folder, no diameters in files or images. try changing to measurement mode.')
@@ -230,7 +235,7 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
     
     return datasets, dataset_diameters #return a dictionary with all of the data from that folder
 
-def compare_folders(gt_folder, test_folder, objectives = False, measure = True, fov_size = 1661):
+def compare_folders(gt_folder, test_folder, objectives = False, measure = True, fov_size = 1661, background = 'white'):
     '''
     Takes a folder of tracings and a folder of U-Net (or other binary) inferences and calculates statistics comparing the results
     
@@ -252,17 +257,21 @@ def compare_folders(gt_folder, test_folder, objectives = False, measure = True, 
     diameters = [None, None]
 
     print("Now I am doing the gt_folder")
-    dataset_dicts[0], diameters[0] = generate_datasets(gt_folder, gt_folder, measure = measure, fov_size = fov_size)
+    dataset_dicts[0], diameters[0] = generate_datasets(gt_folder, gt_folder, measure = measure, fov_size = fov_size, background = 'white')
 
     print("Now I am doing the test_folder")
-    dataset_dicts[1], diameters[1] = generate_datasets(test_folder, test_folder, measure=measure, fov_size = fov_size)
+    dataset_dicts[1], diameters[1] = generate_datasets(test_folder, test_folder, measure=measure, fov_size = fov_size, background = 'black')
     
     grain_dataset_0 = GrainDataset(diameters = diameters[0], name = 'reference')
     grain_dataset_1 = GrainDataset(diameters = diameters[1], name = 'comparison')
 
     distribution_statistics = compare_distributions(grain_dataset_0, grain_dataset_1, lognormal=True, area=False)
-    plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ], display = True, fit = True, reduced=True, hist = True)# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
-    plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ], display = True, fit = True, reduced=False, hist = True, xlim = (0,400), ylim = (0,0.014))# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
+    plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ],
+                 display = True, fit = True, reduced=True, hist = True, 
+                 save_folder = 'distribution_comparison' )# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
+    plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ],
+                 display = True, fit = True, reduced=False, hist = True, xlim = (0,400), ylim = (0,0.014),
+                 save_folder = 'distribution_comparison')# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
 
     if objectives:
         if len(dataset_dicts[0]) == len(dataset_dicts[1]): #verify same number of FoVs
@@ -286,10 +295,10 @@ if __name__ == '__main__':
     output_folder = sys.argv[3]
     fov_size = 1661 #nm/fov
     if mode == 'ri':
-        compare_folders(input_folder, output_folder, measure = True, objectives = True, fov_size = fov_size)
+        compare_folders(input_folder, output_folder, measure = True, objectives = True, fov_size = fov_size, background = 'white')
     elif mode == 'ri':
         print(' mode RI')
-        compare_folders(input_folder, output_folder,measure = True, fov_size=fov_size, objectives = True)
+        compare_folders(input_folder, output_folder,measure = True, fov_size=fov_size, objectives = True, background = 'white')
 
 
 
