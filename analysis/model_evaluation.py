@@ -22,6 +22,7 @@ from analysis.objective_functions.validation_functions import get_objectives
 from skimage import morphology
 from skimage.segmentation import clear_border
 import skimage.io as io
+import matplotlib.pyplot as plt
 
 # Global table to store summary data
 summary_table = []
@@ -68,7 +69,11 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
     image = image.convert('L')  # Convert to grayscale
     # Convert image to numpy array and binarize
     image_array = np.array(image)
-
+    # print("*"*20)
+    # print("Original image")
+    # plt.imshow(image_array)
+    # plt.show()
+    # print("*"*20)
 
     if fov_size is not None:
         sf_nmpx = fov_size/image_array.shape[0]
@@ -76,12 +81,31 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
         sf_nmpx = 1
     # Label objects in the array
     if background == 'white':
-        binary_array = (image_array == 0).astype(int)  # Objects are 0, boundaries are 1
+        binary_array = (image_array <150 ).astype(int)  # ==0 # Objects are 0, boundaries are 1
     elif background == 'black':
         binary_array = (image_array == 255).astype(int)  # Objects are 0, boundaries are 1
     
+    
+    print("*"*20)
+    # print("Binary image")
+    # plt.imshow(binary_array)
+    # plt.show()
+    # print("*"*20)
+
     skeleton = morphology.skeletonize(binary_array)
+    # print("*"*20)
+    # print("Skeletonized image")
+    # plt.imshow(skeleton)
+    # plt.show()
+    # print("*"*20)
+
     dilated_array = morphology.dilation(skeleton)
+    # print("*"*20)
+    # print("Dilated image")
+    # plt.imshow(dilated_array)
+    # plt.show()
+    # print("*"*20)
+
 
     labeled_array, num_features = label(dilated_array == 0) #grains are black, and boundaries are white
     print(f'Found {(num_features)} grains in {image_name}')
@@ -204,6 +228,8 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
                 # Calculate grain areas and centroids for each image
                 if "centroids" not in str(file):
                     try:
+                        print("measure is True and centroids not in file")
+                        print("Calculating grain areas and centroids")
                         df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, background = background, fov_size=fov_size)
                     except:
                         print(f'Error loading image {image_path}')
@@ -215,6 +241,8 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
             else:
                 try:
                     if "centroids" not in str(file):
+                        print("measure is False and centroids not in file")
+                        print("Calculating grain areas and centroids")
                         df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, background = background, fov_size=fov_size)
 
                 except:
@@ -257,10 +285,10 @@ def compare_folders(gt_folder, test_folder, objectives = False, measure = True, 
     diameters = [None, None]
 
     print("Now I am doing the gt_folder")
-    dataset_dicts[0], diameters[0] = generate_datasets(gt_folder, gt_folder, measure = measure, fov_size = fov_size, background = 'white')
+    dataset_dicts[0], diameters[0] = generate_datasets(gt_folder, gt_folder, measure = measure, fov_size = fov_size, background = 'white',saving = True)
 
     print("Now I am doing the test_folder")
-    dataset_dicts[1], diameters[1] = generate_datasets(test_folder, test_folder, measure=measure, fov_size = fov_size, background = 'black')
+    dataset_dicts[1], diameters[1] = generate_datasets(test_folder, test_folder, measure=measure, fov_size = fov_size, background = 'white',saving = True)
     
     grain_dataset_0 = GrainDataset(diameters = diameters[0], name = 'reference')
     grain_dataset_1 = GrainDataset(diameters = diameters[1], name = 'comparison')

@@ -58,8 +58,10 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path): #add m
             continue
 
         single_inference(image_path, output_path, model)
-        output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
-        fm.save_output(output_np, output_path)
+
+        # these lines already occ
+        # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
+        # fm.save_output(output_np, output_path)
 
 def multi_folder_inference(model_path=MODEL_PARAMS, folder='', pattern:str="fov*/*.tif", resolution = TARGET_RESOLUTION, prefix = PREFIX):
 

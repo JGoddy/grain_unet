@@ -67,7 +67,10 @@ def overlay(fnames:list[str|Path], compilation:str = 'min')->np.ndarray:
 def overlay_fov_generator(folder:str, pattern:str):
     
     #Find all the fov folders in the top-level folder
+    print("folder", folder)
+    print("pattern", pattern)
     predicted_fovs_folders = fm.list_fovs(folder, pattern)
+    print("predicted_fovs_folders", predicted_fovs_folders)
 
     for fov_folder in predicted_fovs_folders:
         #for each folder, find the predictions *.png files, stack, and compile. Append to a master list

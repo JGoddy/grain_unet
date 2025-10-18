@@ -13,43 +13,65 @@ from   unet_model.inference.post_processing.post_process import bulk_compile_and
 from   unet_model.inference.infer  import single_inference, multi_folder_inference
 from unet_model.inference.infer import in_situ_inference
 from utility.settings import MODEL_NAME, TARGET_RESOLUTION, INFERENCE, PP_ACTIVATE, TEST_DATA_DIR, PREDICT_DATA_DIR, MODEL_PARAMS
+import argparse
+import utility.user_interface as user_interface
 
 
-if __name__ == "__main__":
-    import argparse
-    import utility.user_interface as user_interface
+
+
+
+# if __name__ == "__main__":
+#     import argparse
+#     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
-    user_interface.logoPrint()
+def run_inference(mode=None, image_path=None, output_path=None):
+    # user_interface.logoPrint()
+    # print("sys.argv", sys.argv)
+    # if len(sys.argv) == 2:
+    #     parser = argparse.ArgumentParser(description="U-Net Inference Runner")
+    #     parser.add_argument("mode", type=str, help="mode")
+    #     args = parser.parse_args()
 
-    if len(sys.argv) == 2:
-        parser = argparse.ArgumentParser(description="U-Net Inference Runner")
-        parser.add_argument("mode", type=str, help="mode")
-        args = parser.parse_args()
-        if args.mode == "in_situ":
+    #     print("args", args)
+    #     print("args.mode", args.mode)
+
+        if mode == "in_situ":
         
-            if PP_ACTIVATE:
-                in_situ_post_process(in_folder = TEST_DATA_DIR, out_folder = TEST_DATA_DIR + "/post_process", integration = 3)
+            if INFERENCE:
+
+                multi_folder_inference(folder = f"{TEST_DATA_DIR}/", pattern = N_TEST_PATTERN) 
+            if PP_ACTIVATE: 
+                in_situ_post_process(in_folder = f"{TEST_DATA_DIR}{output_path}", out_folder = f"{TEST_DATA_DIR}{output_path}" + "/post_process", integration = 3)
            
-        elif args.mode == "post_process":
+        elif mode == "post_process":
             print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
             bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = f'fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}_2/', post_process_option=True)
+       
+        elif mode == "single_inference":
+
+       
+            # parser = argparse.ArgumentParser(description="U-Net Inference Runner")
+            # parser.add_argument("image_path", type=str, help="Path to the input image")
+            # parser.add_argument("output_path", type=str, help="Path to save the output image")
+            # args = parser.parse_args()
+            if image_path is None or output_path is None:
+                print("Image path and output path are required for single inference")
+                sys.exit(1)
+            single_inference(image_path, output_path, model = MODEL_PARAMS)
+        
+        elif mode == None: #no args are passed, assuming n_test functionality use your own pattern
+            
+            if (INFERENCE):
+                print("Running inference")
+                multi_folder_inference(folder = TEST_DATA_DIR, pattern = N_TEST_PATTERN) 
+
+            if (PP_ACTIVATE):
+                print("Running post-processing")
+
+                bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = '*.png', post_process_option=True)
+                print("Post-processing completed")
+            else:
+                pass
         else:
             print("Invalid mode. Use 'in situ' or 'post process'.")
             sys.exit(1)
-
-    if len(sys.argv) == 3:
-        parser = argparse.ArgumentParser(description="U-Net Inference Runner")
-        parser.add_argument("image_path", type=str, help="Path to the input image")
-        parser.add_argument("output_path", type=str, help="Path to save the output image")
-        args = parser.parse_args()
-        single_inference(args.image_path, args.output_path, model = MODEL_PARAMS)
-
-    elif len(sys.argv) == 1: #no args are passed, assuming n_test functionality use your own pattern
-      
-        if (INFERENCE):
-            multi_folder_inference(folder = TEST_DATA_DIR, pattern = N_TEST_PATTERN) 
-
-        if (PP_ACTIVATE):
-            bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = f'fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/', post_process_option=True)
-        else:
-            pass

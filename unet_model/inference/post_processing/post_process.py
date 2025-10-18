@@ -35,13 +35,16 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
     else:
         img_compiled = imgs
 
+    print("Double thresholding")
     img_double_thresh = double_thresh(img_compiled, **kwargs)
 
     img_dilated = np.copy(img_double_thresh)
+    print("Dilating")
     for _ in range(n_dilations):
         img_dilated = morphology.binary_dilation(img_dilated)
     img_closed = morphology.remove_small_holes(img_dilated, area_threshold=min_grain_area)
 
+    print("Skeletonizing")
     skeleton = morphology.skeletonize(img_closed)
     pruned_skeleton, _, _ = pcv.morphology.prune(skeleton.astype('uint8'), prune_size)
 
@@ -57,6 +60,30 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
     #     pruned_skeleton = convert_black_to_transparent(pruned_skeleton)
     return pruned_skeleton
 
+
+def bulk_compile_and_pp_single_fov(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', folder=PREDICT_DATA_DIR, post_process_option=True):
+    """
+    Compiles predictions from multiple images and optionally applies post-processing.
+    This function is for when the images are in a single (fov) folder.
+
+    Parameters:
+    pattern (str): The pattern to match prediction directories.
+    folder (str): The top-level directory containing the FoVs you wish to post-process.
+    post_process_option (bool): Whether to apply post-processing to the compiled images.
+    """
+    os.makedirs(os.path.join(folder, 'post_processed'), exist_ok=True)
+
+    images = fm.get_file_names(folder, pattern = '[!.]*.png')
+
+    for image in images:
+        save_path_comp = os.path.join(folder,f'post_process/compiled_{Path(image).stem}.png')
+        save_path_post = os.path.join(folder,f'post_process/postprocess_{Path(image).stem}.png')
+
+        #fm.save_output(compiled_img, save_path_comp)
+        post_processed = post_process(image, **args_pp)
+        fm.save_output(post_processed, save_path_post) 
+
+
 def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', folder=PREDICT_DATA_DIR, post_process_option=True):
     """
     Compiles predictions from multiple images and optionally applies post-processing.
@@ -69,18 +96,28 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
     Returns:
     None
     """
+
+    print("pattern", pattern)
+    print("folder", folder)
+    print("post_process_option", post_process_option)
+
     compiled_fovs = Overlays.overlay_fov_generator(folder, pattern)
    
     for compiled_fov in compiled_fovs:
+        print("compiling fov")
         fov_predictions_folder, compiled_img, fname = compiled_fov['fov_folder'], compiled_fov['img'], compiled_fov['fname']
 
+        print("Saving compiled image")
         os.makedirs(os.path.join(fov_predictions_folder, 'post_process'), exist_ok=True)
         save_path_comp = os.path.join(fov_predictions_folder,f'post_process/compiled_{Path(fname).stem}.png')
+        print("Saving compiled image")
         save_path_post = os.path.join(fov_predictions_folder,f'post_process/postprocess_{Path(fname).stem}.png')
         
         fm.save_output(compiled_fov['img'], save_path_comp)
+        print("post_process_option", post_process_option)
         if post_process_option:
             post_processed = post_process(compiled_img, **args_pp)
+            print("Saving post-processed image")
             fm.save_output(post_processed, save_path_post)
             
             if FINAL_OUTPUT_DIRECTORY:
@@ -92,8 +129,10 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
 
 def in_situ_post_process(in_folder, out_folder, integration = 3):
  
+    print("in_folder", in_folder)
     images = fm.get_file_names(in_folder, pattern = '[!.]*.png')
     images = [str(image) for image in images]
+    print("there are", len(images), "images to post-process")
     images.sort()
 
     if len(images) == 0:
