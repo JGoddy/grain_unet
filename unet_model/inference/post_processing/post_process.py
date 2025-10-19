@@ -27,16 +27,24 @@ from utility.settings import *
 
 # Test inline comment
 def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=False,
-        out_dict=False, convert_to_trans = True, **kwargs):
+        out_dict=True, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
-    if len(imgs.shape) > 2:
+    if len(imgs.shape) > 2 and compile:
+        print("compiling images")
         img_compiled = Overlays.compile_imgs(imgs, **kwargs)
     else:
         img_compiled = imgs
+        print("not compiling images")
 
+    #print("img_compiled", img_compiled[0])
+    print("img_compiled shape", img_compiled.shape)
     print("Double thresholding")
-    img_double_thresh = double_thresh(img_compiled, **kwargs)
+    
+    # double_tresh return white lines on black background
+    # since the labels are black on white, we need to invert the double threshold
+    # hard-coding this for now: TODO: make this a parameter
+    img_double_thresh = double_thresh(img_compiled, invert_double_thresh=invert_double_thresh, **kwargs)
 
     img_dilated = np.copy(img_double_thresh)
     print("Dilating")
@@ -47,18 +55,21 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
     print("Skeletonizing")
     skeleton = morphology.skeletonize(img_closed)
     pruned_skeleton, _, _ = pcv.morphology.prune(skeleton.astype('uint8'), prune_size)
-
+    #print("pruned_skeleton", pruned_skeleton)
     if out_dict:
-        return {'compiled': img_compiled,
+        out_dict = {'compiled': img_compiled,
                 'double_thresh': img_double_thresh,
                 'dilated': img_dilated,
                 'closed': img_closed,
                 'skeleton': skeleton,
                 'pruned_skeleton': pruned_skeleton
                 }
+        #print("out_dict", out_dict)       
     # if convert_to_trans:
     #     pruned_skeleton = convert_black_to_transparent(pruned_skeleton)
-    return pruned_skeleton
+    else:
+        out_dict = None
+    return [-1.0*(pruned_skeleton-1.0), out_dict]
 
 
 def bulk_compile_and_pp_single_fov(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', folder=PREDICT_DATA_DIR, post_process_option=True):
@@ -127,7 +138,7 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
                 save_path_final_output = os.path.join(final_save_dir,f'postprocess_{Path(fname).stem}.png')
                 fm.save_output(post_processed, save_path_final_output)
 
-def in_situ_post_process(in_folder, out_folder, integration = 3):
+def in_situ_post_process(in_folder, out_folder, compile=True, invert_double_thresh=True, integration = 3):
  
     print("in_folder", in_folder)
     images = fm.get_file_names(in_folder, pattern = '[!.]*.png')
@@ -137,22 +148,36 @@ def in_situ_post_process(in_folder, out_folder, integration = 3):
 
     if len(images) == 0:
         raise ValueError('No images found in the specified folder')
-
+    
+    print("integration", integration)
     for ii in tqdm(range(0, len(images), integration), desc='Post-processing', total=len(images)//integration):
-        image = images[ii]
+        if integration > 1:
+            print(f"combining {integration} images")
+            image = images[ii]
 
-        if ii + integration > len(images):
-            break
-        img = []
-        for jj in range(integration):
-            img.append(images[ii + jj])
-               
-        img_compiled = Overlays.compile_imgs(img, **args_pp)
-        save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}.png')
-        save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}.png')
+            if ii + integration > len(images):
+                break
+            img = []
+            for jj in range(integration):
+                img.append(images[ii + jj])
+                
+            img_compiled = Overlays.compile_imgs(img, **args_pp)
+            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}.png')
+            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}.png')
+
+            
+        else:
+            img_compiled_path = images[ii]
+            img_compiled = io.imread(img_compiled_path)
+            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}.png')
+            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}.png')
+        
+        print("img_compiled_path", img_compiled_path)
+        print("save_path_comp", save_path_comp)
+        print("save_path_post", save_path_post)
         fm.save_output(img_compiled, save_path_comp)
-        post_processed = post_process(img_compiled, **args_pp)
-        fm.save_output(post_processed, save_path_post) 
+        post_processed = post_process(img_compiled, compile=compile, invert_double_thresh=invert_double_thresh)
+        fm.save_output(post_processed[0], save_path_post) 
 
 if __name__ == '__main__':
     from skimage import io

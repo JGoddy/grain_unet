@@ -24,7 +24,8 @@ import utility.user_interface as user_interface
 #     import argparse
 #     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
-def run_inference(mode=None, image_path=None, output_path=None):
+def run_inference(mode=None, image_path=None, output_path=None, compile=False, 
+                    integration=3, invert_double_thresh=True):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
     # if len(sys.argv) == 2:
@@ -41,7 +42,10 @@ def run_inference(mode=None, image_path=None, output_path=None):
 
                 multi_folder_inference(folder = f"{TEST_DATA_DIR}/", pattern = N_TEST_PATTERN) 
             if PP_ACTIVATE: 
-                in_situ_post_process(in_folder = f"{TEST_DATA_DIR}{output_path}", out_folder = f"{TEST_DATA_DIR}{output_path}" + "/post_process", integration = 3)
+                in_situ_post_process(in_folder = f"{TEST_DATA_DIR}{output_path}", 
+                    out_folder = f"{TEST_DATA_DIR}{output_path}" + "/post_process", 
+                    integration = integration, invert_double_thresh=invert_double_thresh,
+                    compile = compile)
            
         elif mode == "post_process":
             print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
