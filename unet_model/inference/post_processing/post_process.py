@@ -145,6 +145,8 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
     compile=True, invert_double_thresh=True, integration = 3):
  
     print("in_folder", in_folder)
+    print("pattern", pattern)
+    print("exclude", exclude)
     images = fm.get_file_names(in_folder, pattern = pattern, exclude = exclude)
     images = [str(image) for image in images]
     print("there are", len(images), "images to post-process")
@@ -176,7 +178,7 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
             save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}.png')
             save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}.png')
         
-        print("img_compiled_path", img_compiled_path)
+        print("img_compiled", img_compiled)
         print("save_path_comp", save_path_comp)
         print("save_path_post", save_path_post)
         fm.save_output(img_compiled, save_path_comp)

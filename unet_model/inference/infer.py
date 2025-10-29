@@ -30,9 +30,9 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor, devic
     return output_np
 
 # Main function to run single inference process
-def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path): 
+def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path, device = None ): 
 
-    device = torch.device(DEVICE_COMPUTE_PLATFORM)
+    device = torch.device(device)
 
     if isinstance(model, unet.UNet):
         model = model
@@ -46,59 +46,60 @@ def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|
     fm.save_output(output_np, output_path)
     #[REF] save only once, there's a bug here
 
-def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path): #add model_pth for bulk export
+def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, device = None): #add model_pth for bulk export
  
     if isinstance(model, unet.UNet):
         model = model
     else:
-        model = unet.load_model_weights(model, device = DEVICE_COMPUTE_PLATFORM)
+        model = unet.load_model_weights(model, device = device)
 
     for image_path, output_path in tqdm(zip(image_paths, output_paths), total = len(image_paths), desc= 'Inference Progress'):
         if Path(image_path).name[0] == '.':
             continue
 
-        single_inference(image_path, output_path, model)
+        single_inference(image_path, output_path, model, device)
 
         # these lines already occ
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
         # fm.save_output(output_np, output_path)
 # THIS IS REALLY SINGLE FOLDER INFERENCE
 # TODO: CHANGE FUNCTION NAME 
-def multi_folder_inference(model_path=MODEL_PARAMS, folder='', pattern:str="fov*/*.tif", resolution = TARGET_RESOLUTION, prefix = PREFIX):
+def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif", exclude = ['/.', 'trace'],
+        target_resolution = 256, prefix = None, device = None):
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''
     
     folder = Path(folder)
     
-    model = unet.load_model_weights(model_path=model_path, device = DEVICE_COMPUTE_PLATFORM )
+    model = unet.load_model_weights(model_path=model_path, device = device)
     print(f"Loaded model from {model_path}")
     
-    print("Compute platform is: ", DEVICE_COMPUTE_PLATFORM)
+    print("Compute platform is: ", device)
 
-    print(f"Looking for images in: {folder}/{pattern}")
-    image_paths = fm.get_file_names(folder, pattern = pattern)
+    print(f"Looking for images in: {folder}/{pattern} excluding: {exclude}")
+    image_paths = fm.get_file_names(folder, pattern = pattern, exclude = exclude)
     if len(list(image_paths)) == 0:
         raise ValueError('\n\nNo images found in the specified folder')
     else:
         print(f"Found {len(list(image_paths))} images")
     
-    save_paths = [os.path.join(path.parent.parent, f'predict_{prefix}_{resolution}', f'predict_{path.name}') for path in image_paths]
-    multi_inference(image_paths, save_paths, model)
+    save_paths = [os.path.join(path.parent.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
+    multi_inference(image_paths, save_paths, model, device)
 
-def in_situ_inference(folder_name, pattern):
+def in_situ_inference(folder_name=None, pattern=None, exclude = ['trace'], model_path=None, device=None, target_resolution=256):
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''
     folder = Path(folder_name)
-    model = unet.load_model_weights(model_path=MODEL_PARAMS, device = DEVICE_COMPUTE_PLATFORM )
-    print(f"Loaded model from {MODEL_PARAMS}")
-    print("Compute platform is: ", DEVICE_COMPUTE_PLATFORM)
-    print(f"Looking for images in: {folder}/{pattern}")
-    image_paths = fm.get_file_names(folder, pattern = pattern)
+    model = unet.load_model_weights(model_path=model_path, device = device )
+    print(f"Loaded model from {model_path}")
+    print("Compute platform is: ", device)
+    print(f"Looking for images in: {folder}/{pattern} excluding: {exclude}")
+    image_paths = fm.get_file_names(folder, pattern = pattern, exclude = exclude)
     if len(list(image_paths)) == 0:
         raise ValueError('\n\nNo images found in the specified folder')
     else:
         print(f"Found {len(list(image_paths))} images")
-    save_paths = [os.path.join(path.parent, f'predict_{MODEL_NAME}_{TARGET_RESOLUTION}', f'predict_{path.name}') for path in image_paths]
+    save_paths = [os.path.join(path.parent, f'predict_{model_path}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
     multi_inference(image_paths, save_paths, model)
 
-    return os.path.join(folder, f'predict_{MODEL_NAME}_{TARGET_RESOLUTION}') #return the folder where the predictions are saved
+    return os.path.join(folder, f'predict_{model_path}_{target_resolution}') #return the folder where the predictions are saved

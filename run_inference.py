@@ -24,8 +24,14 @@ import utility.user_interface as user_interface
 #     import argparse
 #     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
-def run_inference(mode=None, inference = True, post_process = True, image_path=None, output_path=None, compile=False, 
-                    integration=3, invert_double_thresh=True):
+def run_inference(
+        model_path = None, #TODO: put a better default here
+        prefix = None, #TODO: put a better default here
+        mode=None, inference = True, post_process = True,
+        image_folder_path = None, pattern = None, exclude = ['trace'],
+        image_path=None, output_path=None, compile=False, 
+                    integration=3, target_resolution = 256, 
+                    invert_double_thresh=True, device = None):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
     # if len(sys.argv) == 2:
@@ -40,10 +46,14 @@ def run_inference(mode=None, inference = True, post_process = True, image_path=N
         
             if inference:
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
-                multi_folder_inference(folder = f"{TEST_DATA_DIR}/", pattern = N_TEST_PATTERN) 
+                multi_folder_inference(
+                    model_path = model_path,
+                    folder = image_folder_path, pattern = pattern, exclude = exclude,
+                    target_resolution = target_resolution, prefix = prefix, device = device) 
             if post_process: 
-                in_situ_post_process(in_folder = f"{TEST_DATA_DIR}{output_path}", 
-                    out_folder = f"{TEST_DATA_DIR}{output_path}" + "/post_process", 
+                in_situ_post_process(in_folder = image_folder_path,
+                    pattern = pattern, exclude = exclude,
+                    out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     compile = compile)
            
