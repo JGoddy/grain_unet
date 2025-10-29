@@ -25,6 +25,8 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
 
     for images,labels, names in tqdm_train_dataloader: 
 
+        print("images", images.shape)
+        print("labels", labels.shape)
         loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)        
         train_losses.append(loss.item())
 

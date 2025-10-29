@@ -62,7 +62,8 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path): #add m
         # these lines already occ
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
         # fm.save_output(output_np, output_path)
-
+# THIS IS REALLY SINGLE FOLDER INFERENCE
+# TODO: CHANGE FUNCTION NAME 
 def multi_folder_inference(model_path=MODEL_PARAMS, folder='', pattern:str="fov*/*.tif", resolution = TARGET_RESOLUTION, prefix = PREFIX):
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''

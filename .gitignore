@@ -16,4 +16,5 @@ hdf5_dump
 test_data/
 test_data.zip
 training_data/
+Wayne_validation_data/
 *.pth

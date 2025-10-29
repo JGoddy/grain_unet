@@ -24,7 +24,7 @@ import utility.user_interface as user_interface
 #     import argparse
 #     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
-def run_inference(mode=None, image_path=None, output_path=None, compile=False, 
+def run_inference(mode=None, inference = True, post_process = True, image_path=None, output_path=None, compile=False, 
                     integration=3, invert_double_thresh=True):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
@@ -38,18 +38,21 @@ def run_inference(mode=None, image_path=None, output_path=None, compile=False,
 
         if mode == "in_situ":
         
-            if INFERENCE:
-
+            if inference:
+                # TODO: SHOULD THIS BE IN_SITU INFERENCE?
                 multi_folder_inference(folder = f"{TEST_DATA_DIR}/", pattern = N_TEST_PATTERN) 
-            if PP_ACTIVATE: 
+            if post_process: 
                 in_situ_post_process(in_folder = f"{TEST_DATA_DIR}{output_path}", 
                     out_folder = f"{TEST_DATA_DIR}{output_path}" + "/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     compile = compile)
            
         elif mode == "post_process":
-            print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
-            bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = f'fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}_2/', post_process_option=True)
+            #print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
+
+            bulk_compile_and_pp(folder=PREDICT_DATA_DIR, 
+                pattern = N_TEST_PATTERN, 
+                post_process_option=True)
        
         elif mode == "single_inference":
 
@@ -65,11 +68,11 @@ def run_inference(mode=None, image_path=None, output_path=None, compile=False,
         
         elif mode == None: #no args are passed, assuming n_test functionality use your own pattern
             
-            if (INFERENCE):
+            if (inference):
                 print("Running inference")
                 multi_folder_inference(folder = TEST_DATA_DIR, pattern = N_TEST_PATTERN) 
 
-            if (PP_ACTIVATE):
+            if (post_process):
                 print("Running post-processing")
 
                 bulk_compile_and_pp(folder=PREDICT_DATA_DIR, pattern = '*.png', post_process_option=True)

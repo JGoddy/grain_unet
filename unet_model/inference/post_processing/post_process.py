@@ -108,12 +108,15 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
     None
     """
 
-    print("pattern", pattern)
-    print("folder", folder)
-    print("post_process_option", post_process_option)
+    print("pattern:", pattern)
+    print("folder:", folder)
+    print("post_process_option:", post_process_option)
 
     compiled_fovs = Overlays.overlay_fov_generator(folder, pattern)
    
+    print("compiled_fovs:", compiled_fovs)
+
+
     for compiled_fov in compiled_fovs:
         print("compiling fov")
         fov_predictions_folder, compiled_img, fname = compiled_fov['fov_folder'], compiled_fov['img'], compiled_fov['fname']
@@ -138,10 +141,11 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
                 save_path_final_output = os.path.join(final_save_dir,f'postprocess_{Path(fname).stem}.png')
                 fm.save_output(post_processed, save_path_final_output)
 
-def in_situ_post_process(in_folder, out_folder, compile=True, invert_double_thresh=True, integration = 3):
+def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude = ['trace'],
+    compile=True, invert_double_thresh=True, integration = 3):
  
     print("in_folder", in_folder)
-    images = fm.get_file_names(in_folder, pattern = '[!.]*.png')
+    images = fm.get_file_names(in_folder, pattern = pattern, exclude = exclude)
     images = [str(image) for image in images]
     print("there are", len(images), "images to post-process")
     images.sort()
