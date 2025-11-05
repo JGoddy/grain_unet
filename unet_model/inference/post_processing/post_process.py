@@ -30,8 +30,11 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
         out_dict=True, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
-    if len(imgs.shape) > 2 and compile:
-        print("compiling images")
+    print("inside post_process, compile:", compile)
+    print("imgs shape:", imgs.shape)
+    #if len(imgs.shape) > 2 and compile:
+    if compile:
+        print(f"compiling {len(imgs)} images")
         img_compiled = Overlays.compile_imgs(imgs, **kwargs)
     else:
         img_compiled = imgs
@@ -182,7 +185,9 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
         print("save_path_comp", save_path_comp)
         print("save_path_post", save_path_post)
         fm.save_output(img_compiled, save_path_comp)
+        print("inside in_situ_post_process, compile:", compile)
         post_processed = post_process(img_compiled, compile=compile, invert_double_thresh=invert_double_thresh)
+        print("post_processed", post_processed)
         fm.save_output(post_processed[0], save_path_post) 
 
 if __name__ == '__main__':
