@@ -11,15 +11,18 @@ from tqdm import tqdm
 import utility.transformation as t
 
 # Function to run inference
-def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor, device = 'mps', 
-                  target_resolution = 256, image_transform = t.inference_transforms(256))->np.ndarray:
+def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor, 
+                  target_resolution = 256, image_transform = t.inference_transforms(256), device = 'mps')->np.ndarray:
     # Load and transform image
     if target_resolution != 256 and image_transform != t.inference_transforms(256):
         image_transform = t.inference_transforms(target_resolution)
+    print("image:", image if isinstance(image, Path) else image.shape)
     if isinstance(image, torch.Tensor):
         input_tensor = image
     else:
         input_tensor = fm.load_image_tensor(image)
+        print("input_tensor shape:", input_tensor.shape)
+        print("device:", device)
         input_tensor = image_transform(input_tensor).unsqueeze(0).to(device)  # Add batch dimension and move to deviceto(device) 
     print("input_tensor", input_tensor.shape)
     # Perform inference and apply sigmoid to get probabilities
@@ -32,7 +35,7 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor, devic
     return output_np
 
 # Main function to run single inference process
-def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path, target_resolution = 256, device = None ): 
+def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path, target_resolution = 256, device = None): 
 
     device = torch.device(device)
 
@@ -44,7 +47,7 @@ def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|
     else:
         raise ValueError('The model parameter must be an instance of the UNet class or a path to a model weights file.')
 
-    output_np = run_inference(model, image_path, target_resolution, device)
+    output_np = run_inference(model = model, image = image_path, target_resolution = target_resolution, device = device)
     fm.save_output(output_np, output_path)
     #[REF] save only once, there's a bug here
 
@@ -59,7 +62,7 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_
         if Path(image_path).name[0] == '.':
             continue
 
-        single_inference(image_path, output_path, model, target_resolution, device)
+        single_inference(image_path=image_path, output_path=output_path, model=model, target_resolution=target_resolution, device=device)
 
         # these lines already occ
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
@@ -86,7 +89,7 @@ def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif",
         print(f"Found {len(list(image_paths))} images")
     
     save_paths = [os.path.join(path.parent.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
-    multi_inference(image_paths, save_paths, model,target_resolution,device)
+    multi_inference(image_paths=image_paths, output_paths=save_paths, model=model,target_resolution=target_resolution,device=device)
 
 def in_situ_inference(folder_name=None, pattern=None, exclude = ['trace'], model_path=None, device=None, target_resolution=256):
 

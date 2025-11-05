@@ -5,14 +5,16 @@ import warnings
 import configparser
 from pathlib import Path
 from utility import file_manager as fm
+import utility.transformation as t
+
 #from utility.settings import *
 #load params
 config = configparser.ConfigParser()
 config.read('MyUnetConfig.ini')
 from utility.settings import *
 
-PREDICT_DATA_DIR = config['INFERENCE_PARAMS']['OVERLAY_DATA_DIR']
-TARGET_RESOLUTION = int(config['INFERENCE_PARAMS']['OUTPUT_RESOLUTION'])
+# PREDICT_DATA_DIR = config['INFERENCE_PARAMS']['OVERLAY_DATA_DIR']
+# TARGET_RESOLUTION = int(config['INFERENCE_PARAMS']['OUTPUT_RESOLUTION'])
 
 def compile_imgs(imgs, compilation='min', **kwargs):
     '''Compiles grayscale images
@@ -39,7 +41,8 @@ def compile_imgs(imgs, compilation='min', **kwargs):
 
     return img_compiled
 
-def stack_images(fnames:list[str|Path])->np.ndarray:
+def stack_images(fnames:list[str|Path], target_resolution:int=256, 
+                 image_transform = t.inference_transforms(256))->np.ndarray:
     '''Stacks images
     imgs(list[str]) - a list of image file names
     returns: a numpy array of stacked images
@@ -47,15 +50,24 @@ def stack_images(fnames:list[str|Path])->np.ndarray:
     ii=0
     if len(fnames) == 0:
         raise ValueError('No images to stack')
+    if target_resolution != 256 and image_transform != t.inference_transforms(256):
+        image_transform = t.inference_transforms(target_resolution)
+
     for fname in (fnames):
         print(fname)
         if Path(fname).stem[0] == '.':
             continue
         if ii == 0: 
-            predictions = io.imread(fname)
+            #predictions = io.imread(fname)
+            predictions = fm.load_image_tensor(fname)
+            predictions = image_transform(predictions).squeeze() #.unsqueeze(0)
             ii+=1
         else:
-            img = io.imread(fname)
+            #img = io.imread(fname)
+            img = fm.load_image_tensor(fname)
+            img = image_transform(img).squeeze() #.unsqueeze(0)
+            print("img shape:", img.shape)
+
             predictions = np.dstack((predictions,img))
 
     return predictions
