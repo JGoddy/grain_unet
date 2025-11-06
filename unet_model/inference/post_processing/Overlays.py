@@ -16,6 +16,9 @@ from utility.settings import *
 # PREDICT_DATA_DIR = config['INFERENCE_PARAMS']['OVERLAY_DATA_DIR']
 # TARGET_RESOLUTION = int(config['INFERENCE_PARAMS']['OUTPUT_RESOLUTION'])
 
+
+#TODO: I think this function is funky. 
+# what is the point of checking if the first element is a Path or str?
 def compile_imgs(imgs, compilation='min', **kwargs):
     '''Compiles grayscale images
 
@@ -23,9 +26,10 @@ def compile_imgs(imgs, compilation='min', **kwargs):
     compilation - compilation technique. 'min' or 'max' supported
     '''
     imgs_tmp = []
-    if type(imgs[0]) == Path or str:
+    if isinstance(imgs[0], (Path, str)):
         imgs = stack_images(imgs)
-
+    elif isinstance(imgs[0], (np.ndarray, torch.Tensor)):
+        return imgs # see note in stack_images
     if compilation == 'min':
         img_compiled = np.amin(imgs, axis=-1)
     elif compilation == 'max':
@@ -53,7 +57,17 @@ def stack_images(fnames:list[str|Path], target_resolution:int=256,
     if target_resolution != 256 and image_transform != t.inference_transforms(256):
         image_transform = t.inference_transforms(target_resolution)
 
+    # This function currently only supports stacking 
+    # image that it loads from file names, NOT 
+    # numpy arrays or torch tensors. TODO: fix this.
+    # for now, assume that if the image is already loaded 
+    # as a numpy array or torch tensor, it is already stacked so 
+    # it is length 1 and should just be returned. 
     for fname in (fnames):
+        if isinstance(fname, (np.ndarray, torch.Tensor)):
+            predictions = predictions = fm.load_image_tensor(fname)
+            #predictions = image_transform(predictions).squeeze()
+            break
         print(fname)
         if Path(fname).stem[0] == '.':
             continue

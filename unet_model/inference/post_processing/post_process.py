@@ -34,7 +34,7 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
     print("imgs shape:", imgs.shape)
     #if len(imgs.shape) > 2 and compile:
     if compile:
-        print(f"compiling {len(imgs)} images")
+        print("compiling images")
         img_compiled = Overlays.compile_imgs(imgs, **kwargs)
     else:
         img_compiled = imgs
@@ -169,7 +169,7 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
             img = []
             for jj in range(integration):
                 img.append(images[ii + jj])
-                
+            print("img", img)
             img_compiled = Overlays.compile_imgs(img, **args_pp)
             save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}.png')
             save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}.png')
@@ -181,7 +181,7 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
             save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}.png')
             save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}.png')
         
-        print("img_compiled", img_compiled)
+        #print("img_compiled", img_compiled)
         print("save_path_comp", save_path_comp)
         print("save_path_post", save_path_post)
         fm.save_output(img_compiled, save_path_comp)
