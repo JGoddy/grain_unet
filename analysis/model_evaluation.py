@@ -23,7 +23,8 @@ from skimage import morphology
 from skimage.segmentation import clear_border
 import skimage.io as io
 import matplotlib.pyplot as plt
-
+import utility.file_manager as fm
+import utility.transformation as t
 # Global table to store summary data
 summary_table = []
 
@@ -58,17 +59,25 @@ def calculate_scale_factor(unet_diameters, hand_traced_diameters, fov_size=None)
     return scale_factor
 
 
-def calculate_areas_and_centroids(image_path, output_dir, background = 'black', save_image = False, fov_size = None):
+def calculate_areas_and_centroids(image_path=None, output_dir=None, background = 'black', 
+    save_image = False, fov_size = None, target_resolution = 256, 
+    image_transform = t.inference_transforms(256)):
     """
     Calculate the areas and centroids of grains in the image and save them to CSV.
     Also draw the centroids on the image and save the image, if save_image is active.
     """
+
+    # define the transformation to resize the image 
+    if target_resolution != 256 and image_transform != t.inference_transforms(256):
+        image_transform = t.inference_transforms(target_resolution)
+    
     # Load image
-    image_name = Path(image_path).stem
-    image = Image.open(image_path)
-    image = image.convert('L')  # Convert to grayscale
+    #image_name = Path(image_path).stem
+    #print("image_path", image_path)
+    image = fm.load_image(image_path)
+    image = image_transform(image).squeeze()
     # Convert image to numpy array and binarize
-    image_array = np.array(image)
+    #image_array = np.array(image)
     # print("*"*20)
     # print("Original image")
     # plt.imshow(image_array)
@@ -76,14 +85,14 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
     # print("*"*20)
 
     if fov_size is not None:
-        sf_nmpx = fov_size/image_array.shape[0]
+        sf_nmpx = fov_size/image.shape[0]
     else:
         sf_nmpx = 1
     # Label objects in the array
     if background == 'white':
-        binary_array = (image_array <150 ).astype(int)  # ==0 # Objects are 0, boundaries are 1
+        binary_array = (image <150 ).astype(int)  # ==0 # Objects are 0, boundaries are 1
     elif background == 'black':
-        binary_array = (image_array == 255).astype(int)  # Objects are 0, boundaries are 1
+        binary_array = (image == 255).astype(int)  # Objects are 0, boundaries are 1
     
     
     print("*"*20)
@@ -108,7 +117,7 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
 
 
     labeled_array, num_features = label(dilated_array == 0) #grains are black, and boundaries are white
-    print(f'Found {(num_features)} grains in {image_name}')
+    print(f'Found {(num_features)} grains in {image}')
     
     # Calculate area and centroid of each object
     areas = []
@@ -133,7 +142,7 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
     df = pd.DataFrame(areas)
     
     df['Centroid Y'], df['Centroid X'] = zip(*[centroid[0] for centroid in centroids])  # Split centroids into their components
-    image_csv_path = f'{Path(output_dir).absolute()}/{image_name}_grain_areas_and_centroids.csv'
+    image_csv_path = f'{Path(output_dir).absolute()}/{Path(image_path).stem}_grain_areas_and_centroids.csv'
     df.to_csv(image_csv_path, index=False)
     
     if save_image:
@@ -149,7 +158,7 @@ def calculate_areas_and_centroids(image_path, output_dir, background = 'black', 
             cv2.circle(image_color, (x, y), 5, (255, 0, 0), -1)  # Red color
             cv2.putText(image_color, str(grain_label), (x + 6, y), font, font_scale, font_color, thickness) 
         # Save the modified image
-        modified_image_path = f'{Path(output_dir).absolute()}/{image_name}_centroids.png'
+        modified_image_path = f'{Path(output_dir).absolute()}/{Path(image_path).stem}_centroids.png'
         Image.fromarray(image_color).save(modified_image_path)
 
     # Return centroids in a format compatible with get_objectives
@@ -209,7 +218,11 @@ def compute_grain_stats_and_save_summary(output_dir, summary_csv_path, saving = 
         print(f"Summary CSV saved to {summary_csv_path}")
     return summary_df
 
-def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov_size = 1, background = 'white'):
+def generate_datasets(input_dir=None, pattern = None, exclude = "",
+    output_dir=None, measure = True,
+    fov_size = 1, background = 'white', saving = False,
+    target_resolution = 256, image_transform = t.inference_transforms(256)):
+    
     os.makedirs(output_dir, exist_ok=True)
 
     # Collect datasets from processed images
@@ -218,9 +231,9 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
     datasets = []
 
 
-    for file in sorted(os.listdir(input_dir)):
-        if file.endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp')):
-            image_path = os.path.join(input_dir, file)
+    for file in sorted(fm.get_file_names(input_dir, pattern = pattern, exclude = exclude)):
+        #if file.endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp')):
+            #image_path = os.path.join(input_dir, file)
             print(f'Processing {file}...')
 
             
@@ -230,9 +243,11 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
                     try:
                         print("measure is True and centroids not in file")
                         print("Calculating grain areas and centroids")
-                        df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path, output_dir, background = background, fov_size=fov_size)
+                        df, ref_centroids, ref_areas = calculate_areas_and_centroids(image_path=file, 
+                            output_dir=output_dir, background = background, fov_size=fov_size,
+                            target_resolution = target_resolution, image_transform = image_transform)
                     except:
-                        print(f'Error loading image {image_path}')
+                        print(f'Error loading image {file}')
                         continue
                         #Exception('bad folder, no diameters in files or images. try changing to measurement mode.')
             elif f'{Path(file).stem}_grain_areas_and_centroids.csv' in os.listdir(input_dir):  
@@ -263,7 +278,11 @@ def generate_datasets(input_dir, output_dir, saving = False, measure = True, fov
     
     return datasets, dataset_diameters #return a dictionary with all of the data from that folder
 
-def compare_folders(gt_folder, test_folder, objectives = False, measure = True, fov_size = 1661, background = 'white'):
+def compare_folders(gt_folder=None, gt_pattern = None, gt_exclude = "",
+    pred_pattern = None, pred_exclude = "",
+    test_folder=None, objectives = False, 
+    measure = True, fov_size = 1661, background = 'white',
+    target_resolution = 256, image_transform = t.inference_transforms(256)):
     '''
     Takes a folder of tracings and a folder of U-Net (or other binary) inferences and calculates statistics comparing the results
     
@@ -285,10 +304,16 @@ def compare_folders(gt_folder, test_folder, objectives = False, measure = True, 
     diameters = [None, None]
 
     print("Now I am doing the gt_folder")
-    dataset_dicts[0], diameters[0] = generate_datasets(gt_folder, gt_folder, measure = measure, fov_size = fov_size, background = 'white',saving = True)
+    dataset_dicts[0], diameters[0] = generate_datasets(input_dir=gt_folder, 
+        pattern = gt_pattern, exclude = gt_exclude, output_dir=gt_folder, 
+        measure = measure, fov_size = fov_size, background = 'white',saving = True,
+        target_resolution = target_resolution, image_transform = image_transform)
 
     print("Now I am doing the test_folder")
-    dataset_dicts[1], diameters[1] = generate_datasets(test_folder, test_folder, measure=measure, fov_size = fov_size, background = 'white',saving = True)
+    dataset_dicts[1], diameters[1] = generate_datasets(input_dir = test_folder, 
+    pattern = pred_pattern, exclude = pred_exclude, output_dir=test_folder, 
+        measure=measure, fov_size = fov_size, background = 'white',saving = True,
+        target_resolution = target_resolution, image_transform = image_transform)
     
     grain_dataset_0 = GrainDataset(diameters = diameters[0], name = 'reference')
     grain_dataset_1 = GrainDataset(diameters = diameters[1], name = 'comparison')
