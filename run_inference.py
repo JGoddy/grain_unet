@@ -28,10 +28,11 @@ def run_inference(
         model_path = None, #TODO: put a better default here
         prefix = None, #TODO: put a better default here
         mode=None, inference = True, post_process = True,
-        image_folder_path = None, pattern = None, exclude = ['trace'],
+        image_folder_path = None, inference_pattern = None, 
+        postprocess_pattern = None, exclude = ['trace'],
         image_path=None, output_path=None, compile=False, 
-                    integration=3, target_resolution = 256, 
-                    invert_double_thresh=True, device = None):
+        integration=3, target_resolution = 256, 
+        invert_double_thresh=True,out_dict=False, device = None):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
     # if len(sys.argv) == 2:
@@ -48,14 +49,15 @@ def run_inference(
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
                 multi_folder_inference(
                     model_path = model_path,
-                    folder = image_folder_path, pattern = pattern, exclude = exclude,
+                    folder = image_folder_path, pattern = inference_pattern, exclude = exclude,
                     target_resolution = target_resolution, prefix = prefix, device = device) 
             if post_process: 
                 in_situ_post_process(in_folder = image_folder_path,
-                    pattern = pattern, exclude = exclude,
+                    pattern = postprocess_pattern, exclude = exclude,
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
-                    compile = compile)
+                    compile = compile, out_dict= out_dict)
+            #return post_processed # debugging purposes
            
         elif mode == "post_process":
             #print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")

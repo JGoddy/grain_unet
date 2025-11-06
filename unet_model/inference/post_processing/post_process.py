@@ -27,7 +27,7 @@ from utility.settings import *
 
 # Test inline comment
 def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=False,
-        out_dict=True, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
+        out_dict=False, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
     print("inside post_process, compile:", compile)
@@ -44,11 +44,13 @@ def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=Fa
     print("img_compiled shape", img_compiled.shape)
     print("Double thresholding")
     
-    # double_tresh return white lines on black background
+    # double_tresh returns white lines on black background
     # since the labels are black on white, we need to invert the double threshold
     # hard-coding this for now: TODO: make this a parameter
+    if np.max(img_compiled) <= 1: # assuming min value is 0 and max value is 1
+        img_compiled = img_compiled * 255.0
     img_double_thresh = double_thresh(img_compiled, invert_double_thresh=invert_double_thresh, **kwargs)
-
+    
     img_dilated = np.copy(img_double_thresh)
     print("Dilating")
     for _ in range(n_dilations):
@@ -145,7 +147,7 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
                 fm.save_output(post_processed, save_path_final_output)
 
 def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude = ['trace'],
-    compile=True, invert_double_thresh=True, integration = 3):
+    compile=True, invert_double_thresh=True, integration = 3, out_dict=False):
  
     print("in_folder", in_folder)
     print("pattern", pattern)
@@ -185,10 +187,13 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
         print("save_path_comp", save_path_comp)
         print("save_path_post", save_path_post)
         fm.save_output(img_compiled, save_path_comp)
-        print("inside in_situ_post_process, compile:", compile)
-        post_processed = post_process(img_compiled, compile=compile, invert_double_thresh=invert_double_thresh)
-        print("post_processed", post_processed)
-        fm.save_output(post_processed[0], save_path_post) 
+        #print("inside in_situ_post_process, compile:", compile)
+        post_processed = post_process(img_compiled, compile=compile, 
+        invert_double_thresh=invert_double_thresh,
+        out_dict=out_dict)
+        #print("post_processed", post_processed)
+        fm.save_output(post_processed[0], save_path_post)
+        # return post_processed # debugging purposes
 
 if __name__ == '__main__':
     from skimage import io
