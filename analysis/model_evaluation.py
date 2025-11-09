@@ -25,6 +25,7 @@ import skimage.io as io
 import matplotlib.pyplot as plt
 import utility.file_manager as fm
 import utility.transformation as t
+import traceback as tb
 # Global table to store summary data
 summary_table = []
 
@@ -74,8 +75,22 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
     # Load image
     #image_name = Path(image_path).stem
     #print("image_path", image_path)
-    image = fm.load_image(image_path)
-    image = image_transform(image).squeeze()
+    image = fm.load_image_tensor(image_path)
+    image = image_transform(image).squeeze().numpy()
+
+    # stupid way to handle the case where the resized image is not binary 
+    # this is the case for the full Wayne validation data labels,
+    # since the images are very large and must be resized to 256x256
+    # the nouvaux and nuevo labels, for example are, are already binary and 256x256
+    # so the shouldn't be a big problem. 
+    #print("Image min", np.min(image))
+   # print("Image max", np.max(image))
+    #if np.min(image) > 0 or np.max(image) < 1:
+    
+    if (len(np.where(image==0)[0])+len(np.where(image==1)[0]))/(image.shape[0]*image.shape[1]) < 1.0:
+        print("Image is not binary, converting to binary")
+        image = (image>0.95).astype(int)*255
+    
     # Convert image to numpy array and binarize
     #image_array = np.array(image)
     # print("*"*20)
@@ -90,17 +105,17 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
         sf_nmpx = 1
     # Label objects in the array
     if background == 'white':
-        binary_array = (image <150 ).astype(int)  # ==0 # Objects are 0, boundaries are 1
+        binary_array = (image == 0).astype(int)  # ==0 # Objects are 0, boundaries are 1
     elif background == 'black':
         binary_array = (image == 255).astype(int)  # Objects are 0, boundaries are 1
     
     
-    print("*"*20)
+   
     # print("Binary image")
     # plt.imshow(binary_array)
     # plt.show()
     # print("*"*20)
-
+    print("Skeletonizing ...")
     skeleton = morphology.skeletonize(binary_array)
     # print("*"*20)
     # print("Skeletonized image")
@@ -108,6 +123,7 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
     # plt.show()
     # print("*"*20)
 
+    print("Dilating ...")
     dilated_array = morphology.dilation(skeleton)
     # print("*"*20)
     # print("Dilated image")
@@ -117,7 +133,7 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
 
 
     labeled_array, num_features = label(dilated_array == 0) #grains are black, and boundaries are white
-    print(f'Found {(num_features)} grains in {image}')
+    print(f'Found {(num_features)} grains in {image_path}')
     
     # Calculate area and centroid of each object
     areas = []
@@ -138,6 +154,7 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
             areas.append({'Object Label': ii, 'Area (pixels)': area})
             centroids.append((centroid, ii))  # Store centroid with its label
     print("Added ", len(areas), " grains to the list")
+    print("*"*20)
     # Create DataFrame and save CSV for the image
     df = pd.DataFrame(areas)
     
@@ -248,8 +265,9 @@ def generate_datasets(input_dir=None, pattern = None, exclude = "",
                             target_resolution = target_resolution, image_transform = image_transform)
                     except:
                         print(f'Error loading image {file}')
-                        continue
-                        #Exception('bad folder, no diameters in files or images. try changing to measurement mode.')
+                        tb.print_exc()
+                         #continue
+                        raise Exception('bad folder, no diameters in files or images. try changing to measurement mode.')
             elif f'{Path(file).stem}_grain_areas_and_centroids.csv' in os.listdir(input_dir):  
                 print('Found diameters in text file')
                 ref_areas, ref_centroids = read_diameters(os.path.join(input_dir, f'{Path(file).stem}_grain_areas_and_centroids.csv'))
