@@ -65,7 +65,9 @@ def stack_images(fnames:list[str|Path], target_resolution:int=256,
     # it is length 1 and should just be returned. 
     for fname in (fnames):
         if isinstance(fname, (np.ndarray, torch.Tensor)):
-            predictions = predictions = fm.load_image_tensor(fname)
+            # TODO: why is this loaded again? 
+            # if it is already a numpy array or torch tensor, it should just be returned.
+            predictions = fm.load_image_tensor(fname)
             #predictions = image_transform(predictions).squeeze()
             break
         print(fname)

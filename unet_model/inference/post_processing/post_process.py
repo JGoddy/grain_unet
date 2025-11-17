@@ -162,7 +162,7 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
     
     print("integration", integration)
     for ii in tqdm(range(0, len(images), integration), desc='Post-processing', total=len(images)//integration):
-        if integration > 1:
+        if integration > 1: # TODO: is this necessary or will integration=1 take care of this?
             print(f"combining {integration} images")
             image = images[ii]
 
