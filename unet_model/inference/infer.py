@@ -23,7 +23,7 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
         input_tensor = fm.load_image_tensor(image)
         print("input_tensor shape:", input_tensor.shape)
         print("device:", device)
-        input_tensor = image_transform(input_tensor).unsqueeze(0).to(device)  # Add batch dimension and move to deviceto(device) 
+        input_tensor = image_transform(input_tensor).unsqueeze(0).to(device) #* 255.0  # Add batch dimension and move to deviceto(device) 
     print("input_tensor", input_tensor.shape)
     # Perform inference and apply sigmoid to get probabilities
     with torch.no_grad():
@@ -68,7 +68,9 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
         # fm.save_output(output_np, output_path)
 # THIS IS REALLY SINGLE FOLDER INFERENCE
-# TODO: CHANGE FUNCTION NAME 
+# TODO: CHANGE FUNCTION NAME
+# TODO: multi_folder_inference and in_situ_inference currently contain the same code,
+# # but the run_inference call multi_folder_inference if the mode is in_situ 
 def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif", exclude = ['/.', 'trace'],
         target_resolution = 256, prefix = None, device = None):
 
