@@ -174,15 +174,15 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
             print("img", img)
             # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
             img_compiled = Overlays.compile_imgs(img, **args_pp)
-            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_40_512.png')
-            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_40_512.png')
+            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
 
             
         else:
             img_compiled_path = images[ii]
             img_compiled = io.imread(img_compiled_path)
-            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_40.png')
-            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_40.png')
+            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_95.png')
+            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
         
         #print("img_compiled", img_compiled)
         print("save_path_comp", save_path_comp)
