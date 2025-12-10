@@ -25,7 +25,7 @@ from unet_model.inference.post_processing import Overlays
 from utility.settings import *
 
 
-# Test inline comment
+# Test inline comment #min_grain_area=100, prune_size=0
 def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=False,
         out_dict=False, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
@@ -172,16 +172,17 @@ def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude =
             for jj in range(integration):
                 img.append(images[ii + jj])
             print("img", img)
+            # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
             img_compiled = Overlays.compile_imgs(img, **args_pp)
-            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}.png')
-            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}.png')
+            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_40_512.png')
+            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_40_512.png')
 
             
         else:
             img_compiled_path = images[ii]
             img_compiled = io.imread(img_compiled_path)
-            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}.png')
-            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}.png')
+            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_40.png')
+            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_40.png')
         
         #print("img_compiled", img_compiled)
         print("save_path_comp", save_path_comp)
