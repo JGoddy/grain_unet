@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import utility.file_manager as fm
 import utility.transformation as t
 import traceback as tb
+import re
 # Global table to store summary data
 summary_table = []
 
@@ -67,6 +68,7 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
     Calculate the areas and centroids of grains in the image and save them to CSV.
     Also draw the centroids on the image and save the image, if save_image is active.
     """
+    
 
     # define the transformation to resize the image 
     if target_resolution != 256 and image_transform != t.inference_transforms(256):
@@ -99,10 +101,41 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
     # plt.show()
     # print("*"*20)
 
-    if fov_size is not None:
+    # THESE ARE WAYNE'S DATASET SPECIFIC
+    # fov_size is a pandas dataframe with the scale factor for each image
+    # NOTE: THESE MANIPULATIONS OF THE FILE NAME TO MATCH THE INDEX OF THE DATAFRAME 
+    # ARE BASED ON HOW JGODDY NAMED THE FILES IN THE WAYNE VALIDATION DATASET
+    # AND ARE NOT ROBUST TO OTHER NAMING CONVENTIONS. 
+    # TODO: FIGURE OUT A SMARTER WAY TO HANDLE THIS.
+
+    # the regular expressions searches for the first instance of 4 digits in the file name
+    # which corresponds to the session number in the Wayne validation dataset
+    # and is used to index the dataframe to get the scale factor
+    # when there are multiple tilts per FoV, the scale factor is given for the combined tilts, 
+    # denoted by just the session number (without the annealing time or tilt number, i.e. just "2144" not "10hr2144_1") 
+    # in the "Negative" column of the dataframe.
+    # when there is only tilt per FoV, the scale factor is given for the full negative name, i.e. "10hr2155_1"
+    # so there are two distinct cases to consider. 
+    if isinstance(fov_size, pd.DataFrame):
+        try: 
+            sf_nmpx = float(fov_size.at[re.search(r'\d{4}', str(image_path))[0], "Final sf_L"])
+        except:
+            session_number = re.search(r'\d{4}', str(image_path))[0]
+            sf_nmpx = float(fov_size[fov_size["Negative"].astype(str).str.contains(session_number)].values[0][-1])
+            
+        # if Path(image_path).stem.endswith("_trace"):
+        #     sf_nmpx = float(fov_size.at[re.search(r'\d{4}', Path(image_path))[0], "Final sf_L"])
+        # elif Path(image_path).stem.startswith("postprocess_predict"):
+        #     sf_nmpx = float(fov_size.at[re.search(r'\d{4}', Path(image_path))[0], "Final sf_L"])
+        # else:
+        #     raise ValueError(f"Unknown file name: {Path(image_path).stem}")
+
+    elif fov_size is not None:
         sf_nmpx = fov_size/image.shape[0]
     else:
         sf_nmpx = 1
+
+    print("sf_nmpx", sf_nmpx)
     # Label objects in the array
     if background == 'white':
         binary_array = (image == 0).astype(int)  # ==0 # Objects are 0, boundaries are 1
@@ -307,7 +340,7 @@ def compare_folders(gt_folder=None, gt_pattern = None, gt_exclude = "",
     Inputs: 
         -gt_folder   : str containing the path to the folder with the hand tracing (ground truth)
         -test_folder : str containing the path to the folder with the inferences or other comparison
-    Note:
+    Note: (*JGODDY does not think this is true*)
         It is assumed that there is a 1:1 correspondence between the FoVs present in the gt and test folders, 
         and that the 1:1 correspondence can be reconstructed by sorting the names of the files using list.sort()
 
@@ -338,10 +371,10 @@ def compare_folders(gt_folder=None, gt_pattern = None, gt_exclude = "",
 
     distribution_statistics = compare_distributions(grain_dataset_0, grain_dataset_1, lognormal=True, area=False)
     plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ],
-                 display = True, fit = True, reduced=True, hist = True, 
+                 display = True, fit = True, reduced=True, hist = True, #xlim = None, ylim = None, 
                  save_folder = 'distribution_comparison' )# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
     plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ],
-                 display = True, fit = True, reduced=False, hist = True, xlim = (0,400), ylim = (0,0.014),
+                 display = True, fit = True, reduced=False, hist = True,  xlim = (0,400), ylim = (0,0.014),
                  save_folder = 'distribution_comparison')# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
 
     if objectives:

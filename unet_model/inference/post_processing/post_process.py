@@ -26,7 +26,7 @@ from utility.settings import *
 
 
 # Test inline comment #min_grain_area=100, prune_size=0
-def post_process(imgs, n_dilations=3, min_grain_area=100, prune_size=0, debug=False,
+def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=500, debug=False,
         out_dict=False, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
