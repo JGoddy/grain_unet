@@ -32,20 +32,24 @@ def get_file_names(folder:str|Path, pattern:str, exclude:list[str]=['/.'], inclu
             file_names.append(Path(file))
     return file_names
 
-def list_fovs(folder:str|Path, pattern:str='fov*/predict/')->list[Path]:
+def list_fovs(folder:str|Path, pattern:str='fov*/predict/', exclude:list[str]=['/.'], include:list[str]=[''])->list[Path]:
     """
     List the field of views (FOVs) in a folder that match a pattern.
     
     Parameters:
     folder (str): The folder to search for FOVs.
     pattern (str): The pattern to match FOV names.
-    
+    exclude (list): A list of strings to exclude from the list of FOVs (the FOV name, not full path).
+    include (list): A list of strings to include in the list of FOVs (the FOV name, not full path).
+    Usage Note: The variables include and exclude are redundant with the pattern, but can be useful for better 
+          readability in contexts of more complex filtering. Use pattern for filtering the paths, use include 
+          and exclude for filtering the file names.
     Returns:
-    list: A list of FOVs that match the pattern.
+    list: A list of FOVs that match the pattern and do not contain any strings in the exclude list and contain all strings in the include list.
     """
     fovs = []
     for fov in Path(folder).glob(pattern):
-        if fov.is_dir():
+        if fov.is_dir() and all([excl not in str(fov.name) for excl in exclude]) and all([incl in str(fov.name) for incl in include]):
             fovs.append(fov)
     return fovs
 

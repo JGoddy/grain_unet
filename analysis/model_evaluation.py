@@ -374,7 +374,7 @@ def compare_folders(gt_folder=None, gt_pattern = None, gt_exclude = "",
                  display = True, fit = True, reduced=True, hist = True, #xlim = None, ylim = None, 
                  save_folder = 'distribution_comparison' )# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
     plot_distros([{'data':grain_dataset_0, 'name':grain_dataset_0.name},{'data':grain_dataset_1, 'name':grain_dataset_1.name} ],
-                 display = True, fit = True, reduced=False, hist = True,  xlim = (0,400), ylim = (0,0.014),
+                 display = True, fit = True, reduced=False, hist = True,  xlim = (0,400), ylim = (0,0.012),
                  save_folder = 'distribution_comparison')# save_path = os.path.join(test_folder, 'distribution_comparison.png'))
 
     if objectives:

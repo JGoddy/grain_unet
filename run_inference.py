@@ -29,7 +29,8 @@ def run_inference(
         prefix = None, #TODO: put a better default here
         mode=None, inference = True, post_process = True,
         image_folder_path = None, inference_pattern = None, 
-        postprocess_pattern = None, exclude = ['trace'],
+        folders_pattern = None, folders_exclude = [], folders_include = [],
+        images_pattern = None, images_exclude = ['trace'], images_include = [],
         image_path=None, output_path=None, compile=False, 
         integration=3, target_resolution = 256, 
         invert_double_thresh=True,out_dict=False, device = None):
@@ -49,11 +50,14 @@ def run_inference(
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
                 multi_folder_inference(
                     model_path = model_path,
-                    folder = image_folder_path, pattern = inference_pattern, exclude = exclude,
+                    folder = image_folder_path, pattern = inference_pattern, exclude = images_exclude, include = images_include,
                     target_resolution = target_resolution, prefix = prefix, device = device) 
             if post_process: 
                 in_situ_post_process(in_folder = image_folder_path,
-                    pattern = postprocess_pattern, exclude = exclude,
+                    folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
+                    folders_include = folders_include,
+                    images_pattern = images_pattern, images_exclude = images_exclude, 
+                    images_include = images_include, 
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     compile = compile, out_dict= out_dict)

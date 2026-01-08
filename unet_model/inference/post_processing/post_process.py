@@ -26,7 +26,7 @@ from utility.settings import *
 
 
 # Test inline comment #min_grain_area=100, prune_size=0
-def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=500, debug=False,
+def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=0, debug=False,
         out_dict=False, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
@@ -146,54 +146,90 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
                 save_path_final_output = os.path.join(final_save_dir,f'postprocess_{Path(fname).stem}.png')
                 fm.save_output(post_processed, save_path_final_output)
 
-def in_situ_post_process(in_folder, out_folder, pattern = '[!.]*.png', exclude = ['trace'],
+def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/", folders_exclude = [], folders_include = [],
+    images_pattern = '[!.]*.png', images_exclude = ['trace'], images_include = [],
     compile=True, invert_double_thresh=True, integration = 3, out_dict=False):
  
     print("in_folder", in_folder)
-    print("pattern", pattern)
-    print("exclude", exclude)
-    images = fm.get_file_names(in_folder, pattern = pattern, exclude = exclude)
-    images = [str(image) for image in images]
-    print("there are", len(images), "images to post-process")
-    images.sort()
+    print("folders_pattern", folders_pattern)
+    print("folders_exclude", folders_exclude)
+    print("folders_include", folders_include)
+    print("images_pattern", images_pattern)
+    print("images_exclude", images_exclude)
+    print("images_include", images_include)
 
-    if len(images) == 0:
-        raise ValueError('No images found in the specified folder')
-    
-    print("integration", integration)
-    for ii in tqdm(range(0, len(images), integration), desc='Post-processing', total=len(images)//integration):
-        if integration > 1: # TODO: is this necessary or will integration=1 take care of this?
-            print(f"combining {integration} images")
-            image = images[ii]
+    # combine the images in each folder instead of a fixed number of images
+    if integration == "folders":
+        folders = fm.list_fovs(in_folder, pattern = folders_pattern, exclude = folders_exclude, include = folders_include)
+        print("there are", len(folders), "folders to post-process:")
+        print(folders)
+        print("******")
+        #fovs = {}
+        for folder in folders:
+            images = fm.get_file_names(folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
+            if len(images) == 0:
+                raise ValueError('No images found in the specified folder')
+            images = [str(image) for image in images]
+            images.sort()
+           # fovs[folder] = images
+            print("there are", len(images), "images to post-process in folder:", folder)
+            print("images", images)
+            print("******")
+            image = images[0]
 
-            if ii + integration > len(images):
-                break
-            img = []
-            for jj in range(integration):
-                img.append(images[ii + jj])
-            print("img", img)
             # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
-            img_compiled = Overlays.compile_imgs(img, **args_pp)
-            save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
-            save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+            img_compiled = Overlays.compile_imgs(images, **args_pp)
+                
 
+    else:
+        images = fm.get_file_names(in_folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
+        images = [str(image) for image in images]
+        print("there are", len(images), "images to post-process")
+        images.sort()
+
+        if len(images) == 0:
+            raise ValueError('No images found in the specified folder')
+    # if integration is "folders" 
+    # then the number to loop over for ii is the number of folders, 
+
+
+        print("integration", integration)
+        for ii in tqdm(range(0, len(images), integration), desc='Post-processing', total=len(images)//integration):
+            if integration > 1: # TODO: is this necessary or will integration=1 take care of this?
+                print(f"combining {integration} images")
+                image = images[ii]
+
+                if ii + integration > len(images):
+                    break
+                img = []
+                for jj in range(integration):
+                    img.append(images[ii + jj])
+                print("img", img)
+                # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
+                img_compiled = Overlays.compile_imgs(img, **args_pp)
+                save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+                save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+
+                
+            else:
+                img_compiled_path = images[ii]
+                img_compiled = io.imread(img_compiled_path)
+                # save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_95.png')
+                # save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
             
-        else:
-            img_compiled_path = images[ii]
-            img_compiled = io.imread(img_compiled_path)
-            save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_95.png')
-            save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
-        
         #print("img_compiled", img_compiled)
-        print("save_path_comp", save_path_comp)
-        print("save_path_post", save_path_post)
-        fm.save_output(img_compiled, save_path_comp)
-        #print("inside in_situ_post_process, compile:", compile)
-        post_processed = post_process(img_compiled, compile=compile, 
-        invert_double_thresh=invert_double_thresh,
-        out_dict=out_dict)
-        #print("post_processed", post_processed)
-        fm.save_output(post_processed[0], save_path_post)
+        
+    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+    print("save_path_comp", save_path_comp)
+    print("save_path_post", save_path_post)
+    fm.save_output(img_compiled, save_path_comp)
+    #print("inside in_situ_post_process, compile:", compile)
+    post_processed = post_process(img_compiled, compile=compile, 
+    invert_double_thresh=invert_double_thresh,
+    out_dict=out_dict)
+    #print("post_processed", post_processed)
+    fm.save_output(post_processed[0], save_path_post)
         # return post_processed # debugging purposes
 
 if __name__ == '__main__':
