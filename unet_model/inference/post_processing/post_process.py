@@ -179,6 +179,8 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
 
             # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
             img_compiled = Overlays.compile_imgs(images, **args_pp)
+
+            save_and_post_process(images[0],img_compiled, out_folder, invert_double_thresh=invert_double_thresh, compile=compile, out_dict=out_dict)
                 
 
     else:
@@ -218,7 +220,10 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                 # save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
             
         #print("img_compiled", img_compiled)
-        
+        save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=invert_double_thresh, compile=compile, out_dict=out_dict)
+
+def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, compile=True, out_dict=False):
+    
     save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
     save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
     print("save_path_comp", save_path_comp)
@@ -230,7 +235,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
     out_dict=out_dict)
     #print("post_processed", post_processed)
     fm.save_output(post_processed[0], save_path_post)
-        # return post_processed # debugging purposes
+    # return post_processed # debugging purposes
 
 if __name__ == '__main__':
     from skimage import io
