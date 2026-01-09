@@ -17,6 +17,7 @@ from pathlib import Path
 from skimage import morphology, io
 from plantcv import plantcv as pcv
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 #Local Imports
 import utility.file_manager as fm
@@ -74,6 +75,8 @@ def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=0, debug=Fals
     #     pruned_skeleton = convert_black_to_transparent(pruned_skeleton)
     else:
         out_dict = None
+        
+        # convert pruned_skeleton from black on white to white on black
     return [-1.0*(pruned_skeleton-1.0), out_dict]
 
 
@@ -178,10 +181,14 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
             image = images[0]
 
             # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
-            img_compiled = Overlays.compile_imgs(images, **args_pp)
+            if compile and len(images) > 1:
+                img_compiled = Overlays.compile_imgs(images, **args_pp)
 
-            save_and_post_process(images[0],img_compiled, out_folder, invert_double_thresh=invert_double_thresh, compile=compile, out_dict=out_dict)
-                
+                save_and_post_process(images[0],img_compiled, out_folder, invert_double_thresh=invert_double_thresh, compile=compile, out_dict=out_dict)
+            else:
+                for image in images:
+                    img = plt.imread(image)
+                    save_and_post_process(image,img, out_folder, invert_double_thresh=invert_double_thresh, compile=compile, out_dict=out_dict)
 
     else:
         images = fm.get_file_names(in_folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
@@ -209,8 +216,8 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                 print("img", img)
                 # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
                 img_compiled = Overlays.compile_imgs(img, **args_pp)
-                save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
-                save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+                # save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+                # save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
 
                 
             else:
