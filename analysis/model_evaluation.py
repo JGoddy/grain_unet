@@ -118,7 +118,7 @@ def calculate_areas_and_centroids(image_path=None, output_dir=None, background =
     # so there are two distinct cases to consider. 
     if isinstance(fov_size, pd.DataFrame):
         try: 
-            sf_nmpx = float(fov_size.at[re.search(r'\d{4}', str(image_path))[0], "Final sf_L"])
+            sf_nmpx = float(fov_size.at[re.search(r'\d{4}', str(image_path))[0], "1/sf_L"])
         except:
             session_number = re.search(r'\d{4}', str(image_path))[0]
             sf_nmpx = float(fov_size[fov_size["Negative"].astype(str).str.contains(session_number)].values[0][-1])

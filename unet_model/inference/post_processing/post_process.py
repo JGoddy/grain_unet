@@ -27,7 +27,7 @@ from utility.settings import *
 
 
 # Test inline comment #min_grain_area=100, prune_size=0
-def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=0, debug=False,
+def post_process(imgs, n_dilations=3, min_grain_area=5, prune_size=20, debug=False,
         out_dict=False, convert_to_trans = True, invert_double_thresh=True, compile=False,**kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
@@ -48,7 +48,7 @@ def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=0, debug=Fals
     # double_tresh returns white lines on black background
     # since the labels are black on white, we need to invert the double threshold
     # hard-coding this for now: TODO: make this a parameter
-    if np.max(img_compiled) <= 1: # assuming min value is 0 and max value is 1
+    if np.max(img_compiled) <= 1: # assuming min value is 0 and max value is 1, if not, then convert to 0-255 scale
         img_compiled = img_compiled * 255.0
     img_double_thresh = double_thresh(img_compiled, invert_double_thresh=invert_double_thresh, **kwargs)
     
@@ -75,7 +75,7 @@ def post_process(imgs, n_dilations=3, min_grain_area=0, prune_size=0, debug=Fals
     #     pruned_skeleton = convert_black_to_transparent(pruned_skeleton)
     else:
         out_dict = None
-        
+
         # convert pruned_skeleton from black on white to white on black
     return [-1.0*(pruned_skeleton-1.0), out_dict]
 
@@ -164,7 +164,14 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
     # combine the images in each folder instead of a fixed number of images
     if integration == "folders":
         folders = fm.list_fovs(in_folder, pattern = folders_pattern, exclude = folders_exclude, include = folders_include)
-        print("there are", len(folders), "folders to post-process:")
+        if len(folders) == 0:
+            raise ValueError('No folders found in the specified folder')
+        elif len(folders) > 1:
+            print("there are", len(folders), "folders to post-process:")
+        else:
+            print("there is only one folder to post-process")
+        print("******")
+        print("folder(s):")
         print(folders)
         print("******")
         #fovs = {}
@@ -175,7 +182,10 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
             images = [str(image) for image in images]
             images.sort()
            # fovs[folder] = images
-            print("there are", len(images), "images to post-process in folder:", folder)
+            if len(images) > 1:
+                print("there are", len(images), "images to post-process in folder:", folder)
+            else:
+                print("there is only one image to post-process in folder:", folder)
             print("images", images)
             print("******")
             image = images[0]
@@ -193,11 +203,16 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
     else:
         images = fm.get_file_names(in_folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
         images = [str(image) for image in images]
-        print("there are", len(images), "images to post-process")
-        images.sort()
-
+        
         if len(images) == 0:
             raise ValueError('No images found in the specified folder')
+        elif len(images) > 1: 
+            print("there are", len(images), "images to post-process")
+        else:
+            print("there is only one image to post-process")
+        images.sort()
+
+        
     # if integration is "folders" 
     # then the number to loop over for ii is the number of folders, 
 
