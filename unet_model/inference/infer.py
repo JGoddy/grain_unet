@@ -35,7 +35,7 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     return output_np
 
 # Main function to run single inference process
-def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path, target_resolution = 256, device = None): 
+def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|str|Path, target_resolution = 256, image_transform = t.inference_transforms(256), device = None): 
 
     device = torch.device(device)
 
@@ -47,11 +47,11 @@ def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|
     else:
         raise ValueError('The model parameter must be an instance of the UNet class or a path to a model weights file.')
 
-    output_np = run_inference(model = model, image = image_path, target_resolution = target_resolution, device = device)
+    output_np = run_inference(model = model, image = image_path, target_resolution = target_resolution, image_transform = image_transform, device = device)
     fm.save_output(output_np, output_path)
     #[REF] save only once, there's a bug here
 
-def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_resolution = 256, device = None): #add model_pth for bulk export
+def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_resolution = 256, image_transform = t.inference_transforms(256), device = None): #add model_pth for bulk export
  
     if isinstance(model, unet.UNet):
         model = model
@@ -62,7 +62,7 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_
         if Path(image_path).name[0] == '.':
             continue
 
-        single_inference(image_path=image_path, output_path=output_path, model=model, target_resolution=target_resolution, device=device)
+        single_inference(image_path=image_path, output_path=output_path, model=model, target_resolution=target_resolution, image_transform=image_transform, device=device)
 
         # these lines already occ
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
@@ -72,7 +72,7 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_
 # TODO: multi_folder_inference and in_situ_inference currently contain the same code,
 # # but the run_inference call multi_folder_inference if the mode is in_situ 
 def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif", exclude = ['/.', 'trace'], include = [],
-        target_resolution = 256, prefix = None, device = None):
+        target_resolution = 256, image_transform = t.inference_transforms(256), prefix = None, device = None):
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''
     
@@ -91,9 +91,9 @@ def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif",
         print(f"Found {len(list(image_paths))} images")
     
     save_paths = [os.path.join(path.parent.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
-    multi_inference(image_paths=image_paths, output_paths=save_paths, model=model,target_resolution=target_resolution,device=device)
+    multi_inference(image_paths=image_paths, output_paths=save_paths, model=model,target_resolution=target_resolution,image_transform=image_transform,device=device)
 
-def in_situ_inference(folder_name=None, pattern=None, exclude = ['trace'], include = [], model_path=None, device=None, target_resolution=256):
+def in_situ_inference(folder_name=None, pattern=None, exclude = ['trace'], include = [], model_path=None, device=None, target_resolution=256, image_transform = t.inference_transforms(256)):
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''
     folder = Path(folder_name)
@@ -107,6 +107,6 @@ def in_situ_inference(folder_name=None, pattern=None, exclude = ['trace'], inclu
     else:
         print(f"Found {len(list(image_paths))} images")
     save_paths = [os.path.join(path.parent, f'predict_{model_path}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
-    multi_inference(image_paths, save_paths, model)
+    multi_inference(image_paths, save_paths, model, target_resolution=target_resolution, image_transform=image_transform, device=device)
 
     return os.path.join(folder, f'predict_{model_path}_{target_resolution}') #return the folder where the predictions are saved
