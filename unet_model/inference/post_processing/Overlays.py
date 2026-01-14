@@ -17,17 +17,16 @@ from utility.settings import *
 # TARGET_RESOLUTION = int(config['INFERENCE_PARAMS']['OUTPUT_RESOLUTION'])
 
 
-#TODO: I think this function is funky. 
-# what is the point of checking if the first element is a Path or str?
-def compile_imgs(imgs, compilation='min', **kwargs):
+
+def compile_imgs(imgs, target_resolution=256, image_transform = t.inference_transforms(256), compilation='min', **kwargs):
     '''Compiles grayscale images
 
     imgs - a numpy depth-wise stack of images (i.e. shape (512,512,n))
     compilation - compilation technique. 'min' or 'max' supported
     '''
     imgs_tmp = []
-    if isinstance(imgs[0], (Path, str)):
-        imgs = stack_images(imgs)
+    if isinstance(imgs[0], (Path, str)): 
+        imgs = stack_images(imgs, target_resolution=target_resolution, image_transform=t.inference_transforms(target_resolution))
     elif isinstance(imgs[0], (np.ndarray, torch.Tensor)):
         return imgs # see note in stack_images
     if compilation == 'min':
@@ -50,6 +49,13 @@ def stack_images(fnames:list[str|Path], target_resolution:int=256,
     '''Stacks images
     imgs(list[str]) - a list of image file names
     returns: a numpy array of stacked images
+
+    NOTE: This function currently only supports stacking 
+    image that it loads from file names, NOT 
+    numpy arrays or torch tensors. TODO: fix this.
+    for now, assume that if the image is already loaded 
+    as a numpy array or torch tensor, it is already stacked so 
+    it is length 1 and should just be returned. 
     '''
     ii=0
     if len(fnames) == 0:
@@ -57,16 +63,11 @@ def stack_images(fnames:list[str|Path], target_resolution:int=256,
     if target_resolution != 256 and image_transform != t.inference_transforms(256):
         image_transform = t.inference_transforms(target_resolution)
 
-    # This function currently only supports stacking 
-    # image that it loads from file names, NOT 
-    # numpy arrays or torch tensors. TODO: fix this.
-    # for now, assume that if the image is already loaded 
-    # as a numpy array or torch tensor, it is already stacked so 
-    # it is length 1 and should just be returned. 
     for fname in (fnames):
         if isinstance(fname, (np.ndarray, torch.Tensor)):
             # TODO: why is this loaded again? 
             # if it is already a numpy array or torch tensor, it should just be returned.
+            # but loading it again will not hurt, and it will be converted to a tensor if it is not already.
             predictions = fm.load_image_tensor(fname)
             #predictions = image_transform(predictions).squeeze()
             break

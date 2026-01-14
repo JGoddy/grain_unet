@@ -2,7 +2,7 @@
 Inference Runner
 Reads config for paths containing images and outputs segmentations without post-processing
 '''
-__author__ = "Matthew Patrick, Lauren Grae, Rosnel Leyva-Cortes" 
+__author__ = "Matthew Patrick, Lauren Grae, Rosnel Leyva-Cortes, Julian Goddy" 
 
 from utility.settings import *
 
@@ -11,11 +11,11 @@ import sys
 import utility.user_interface as user_interface
 from   unet_model.inference.post_processing.post_process import bulk_compile_and_pp, in_situ_post_process
 from   unet_model.inference.infer  import single_inference, multi_folder_inference
-from unet_model.inference.infer import in_situ_inference
-from utility.settings import MODEL_NAME, TARGET_RESOLUTION, INFERENCE, PP_ACTIVATE, TEST_DATA_DIR, PREDICT_DATA_DIR, MODEL_PARAMS
-import argparse
-import utility.user_interface as user_interface
-
+#from unet_model.inference.infer import in_situ_inference
+#from utility.settings import MODEL_NAME, TARGET_RESOLUTION, INFERENCE, PP_ACTIVATE, TEST_DATA_DIR, PREDICT_DATA_DIR, MODEL_PARAMS
+#import argparse
+#import utility.user_interface as user_interface
+import utility.transformation as t
 
 
 
@@ -33,6 +33,7 @@ def run_inference(
         images_pattern = None, images_exclude = ['trace'], images_include = [],
         image_path=None, output_path=None, compile=False, 
         integration=3, target_resolution = 256, 
+        image_transform = t.inference_transforms(256),
         invert_double_thresh=True,out_dict=False, device = None):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
@@ -51,7 +52,8 @@ def run_inference(
                 multi_folder_inference(
                     model_path = model_path,
                     folder = image_folder_path, pattern = inference_pattern, exclude = images_exclude, include = images_include,
-                    target_resolution = target_resolution, prefix = prefix, device = device) 
+                    target_resolution = target_resolution, image_transform = image_transform,
+                    prefix = prefix, device = device) 
             if post_process: 
                 in_situ_post_process(in_folder = image_folder_path,
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
@@ -60,7 +62,9 @@ def run_inference(
                     images_include = images_include, 
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
-                    compile = compile, out_dict= out_dict)
+                    compile = compile, out_dict= out_dict,
+                    target_resolution = target_resolution,
+                    image_transform = image_transform)
             #return post_processed # debugging purposes
            
         elif mode == "post_process":
