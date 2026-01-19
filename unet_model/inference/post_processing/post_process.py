@@ -33,7 +33,7 @@ import utility.transformation as t
 
 
 # Test inline comment #min_grain_area=100, prune_size=0
-def post_process(img_compiled, n_dilations=3, min_grain_area=10, prune_size=25, debug=False,
+def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=40, debug=False,
         out_dict=False, convert_to_trans = True, invert_double_thresh=True, **kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
@@ -203,7 +203,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
 
             # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
             if compile and len(images) > 1:
-                img_compiled = Overlays.compile_imgs(images, target_resolution=target_resolution, image_transform=t.inference_transforms(target_resolution), **args_pp)
+                img_compiled = Overlays.compile_imgs(images, target_resolution=target_resolution, image_transform=image_transform, **args_pp)
 
                 save_and_post_process(images[0],img_compiled, out_folder, 
                     invert_double_thresh=invert_double_thresh, 
@@ -246,7 +246,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                     img.append(images[ii + jj])
                 print("img", img)
                 # TODO: ADD THE NUMBER OF EPOCHS TO THE SAVE PATH
-                img_compiled = Overlays.compile_imgs(img, target_resolution=target_resolution, image_transform=t.inference_transforms(target_resolution), **args_pp)
+                img_compiled = Overlays.compile_imgs(img, target_resolution=target_resolution, image_transform=image_transform, **args_pp)
                 # save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
                 # save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
 
@@ -262,11 +262,10 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
             invert_double_thresh=invert_double_thresh, 
             out_dict=out_dict)
 
-def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, out_dict=False,
-    target_resolution = 256, image_transform = t.inference_transforms(256)):
+def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, out_dict=False):
     
-    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
-    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_70_512.png')
+    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_70_512.png')
     print("save_path_comp", save_path_comp)
     print("save_path_post", save_path_post)
     fm.save_output(img_compiled, save_path_comp)
