@@ -53,7 +53,8 @@ def run_inference(
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
                 multi_folder_inference(
                     model_path = model_path,
-                    folder = image_folder_path, pattern = inference_pattern, exclude = images_exclude, include = images_include,
+                    folder = image_folder_path, pattern = inference_pattern, 
+                    exclude = images_exclude, include = images_include,
                     target_resolution = target_resolution, image_transform = image_transform,
                     prefix = prefix, device = device) 
             if post_process: 

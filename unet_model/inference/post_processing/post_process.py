@@ -246,7 +246,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
         for ii in tqdm(range(0, len(images), integration), desc='Post-processing', total=len(images)//integration):
             if integration > 1: # TODO: is this necessary or will integration=1 take care of this?
                 print(f"combining {integration} images")
-                image = images[ii]
+                image_compiled_path = images[ii] #TODO: did not test renaming 'image' to 'image_path'
 
                 if ii + integration > len(images):
                     break
@@ -261,13 +261,13 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
 
                 
             else:
-                img_compiled_path = images[ii]
-                img_compiled = io.imread(img_compiled_path)
+                image_compiled_path = images[ii]
+                img_compiled = io.imread(image_compiled_path)
                 # save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_95.png')
                 # save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
             
         #print("img_compiled", img_compiled)
-        save_and_post_process(image,img_compiled, out_folder, 
+        save_and_post_process(image_compiled_path,img_compiled, out_folder, 
             invert_double_thresh=invert_double_thresh, 
             conservative_thresh=conservative_thresh,
             liberal_thresh=liberal_thresh,
