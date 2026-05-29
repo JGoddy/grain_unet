@@ -64,7 +64,7 @@ def multi_inference(image_paths, output_paths, model:unet.UNet|str|Path, target_
 
         single_inference(image_path=image_path, output_path=output_path, model=model, target_resolution=target_resolution, image_transform=image_transform, device=device)
 
-        # these lines already occ
+        # these lines already occur in the single_inference function
         # output_np = run_inference(model, image_path, DEVICE_COMPUTE_PLATFORM)
         # fm.save_output(output_np, output_path)
 # THIS IS REALLY SINGLE FOLDER INFERENCE

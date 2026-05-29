@@ -155,7 +155,14 @@ def get_distribution_from_folder(folder:str, base_path:str = None):
 def compare_distributions(dataset1, dataset2 , lognormal=False, area = False):
     
     print('#-------------------------------------------------------------------#')
-    print(f"Comparing \n{dataset1.original_file_path}. mean = {np.mean(dataset1.diameters)}, N = {len(dataset1.diameters)} and \n{dataset2.original_file_path}. mean = {np.mean(dataset2.diameters)}, N = {len(dataset2.diameters)}")
+    #print(f"Comparing \n{dataset1.original_file_path}. mean = {np.mean(dataset1.diameters)}, N = {len(dataset1.diameters)} and \n{dataset2.original_file_path}. mean = {np.mean(dataset2.diameters)}, N = {len(dataset2.diameters)}")
+    print("Comparing")
+    print(f"{dataset1.original_file_path}. N = {len(dataset1.diameters)}") 
+    print(f"Mean of circle equivalent diameters = {np.mean(dataset1.diameters)}, \n diameter of mean area = {dataset1.diameter_of_mean_area}")
+    
+
+    print(f"{dataset2.original_file_path}. N = {len(dataset2.diameters)}") 
+    print(f"mean of circle equivalent diameters = {np.mean(dataset2.diameters)}, \n diameter of mean area = {dataset2.diameter_of_mean_area}")
 
 
     if lognormal:
@@ -187,6 +194,7 @@ def compare_distributions(dataset1, dataset2 , lognormal=False, area = False):
 
 
     # Perform t-test
+    print("Statistical tests for circle equivalent diameter distributions:")
     t_stat, t_pvalue = stats.ttest_ind(ds_test_1, ds_test_2)
     print("\nT-Test:")
     print(f"T statistic: {t_stat}")

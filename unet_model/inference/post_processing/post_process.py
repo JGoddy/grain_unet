@@ -1,13 +1,19 @@
 '''
 kwargs:
-    'compilation': (default 'min') defines the image compilation technique
-    'liberal_thresh': (default 200) liberal threshold for double threshold
-    'conservative_thresh': (default 160) conservative threshold for double threshold
-    'invert_double_thresh': (default True) Changes < to > in double threshold
+    'img_compiled': the compiled image
     'n_dilations': (default 3) Number of dilations to apply in closing
     'min_grain_area': (default 100) Max size of a hole to close
     'prune_size': (default 30) Size to prune with plantcv
+    'convert_to_trans': (default True) convert the image to transparent
+    'invert_double_thresh': (default True) Changes < to > in double threshold
+    'conservative_thresh': (default 160) conservative threshold for double threshold
+    'liberal_thresh': (default 200) liberal threshold for double threshold
+
     'out_dict': (default False) return a dict with all the intermediate steps
+    'debug': (default False) print debug information
+        
+    'compilation': (default 'min') defines the image compilation technique #TODO: USE THIS
+
 '''
 
 #Standard Library Imports
@@ -27,14 +33,11 @@ from utility.settings import *
 import utility.transformation as t
 
 
-#NOTE: post_process no longer compiles images, it only post-processes them.
-# This is to increase modularity so that the compile_imgs function and post_process function 
-# can be used independently, which increases flexibility. 
-
-
 # Test inline comment #min_grain_area=100, prune_size=0
-def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=40, debug=False,
-        out_dict=False, convert_to_trans = True, invert_double_thresh=True, **kwargs):
+# n_dilations = 3
+def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50, 
+         convert_to_trans = True, invert_double_thresh=True, 
+        conservative_thresh=160, liberal_thresh=200, out_dict=False, debug=False, **kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
     print("min_grain_area:", min_grain_area)
@@ -59,7 +62,7 @@ def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=40, 
 
     if np.max(img_compiled) <= 1: # assuming min value is 0 and max value is 1, if not, then convert to 0-255 scale
         img_compiled = img_compiled * 255.0
-    img_double_thresh = double_thresh(img_compiled, invert_double_thresh=invert_double_thresh, **kwargs)
+    img_double_thresh = double_thresh(img_compiled, invert_double_thresh=invert_double_thresh, conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh, **kwargs)
     
     img_dilated = np.copy(img_double_thresh)
     print("Dilating")
@@ -75,6 +78,8 @@ def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=40, 
     if out_dict:
         out_dict = {'compiled': img_compiled,
                 'double_thresh': img_double_thresh,
+                'conservative_thresh': conservative_thresh,
+                'liberal_thresh': liberal_thresh,
                 'dilated': img_dilated,
                 'closed': img_closed,
                 'skeleton': skeleton,
@@ -161,7 +166,7 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
 
 def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/", folders_exclude = [], folders_include = [],
     images_pattern = '[!.]*.png', images_exclude = ['trace'], images_include = [],
-    compile=True, invert_double_thresh=True, integration = 3, out_dict=False,
+    compile=True, invert_double_thresh=True, conservative_thresh=160, liberal_thresh=200, integration = 3, out_dict=False,
     target_resolution = 256, image_transform = t.inference_transforms(256)):
  
     print("in_folder", in_folder)
@@ -207,6 +212,8 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
 
                 save_and_post_process(images[0],img_compiled, out_folder, 
                     invert_double_thresh=invert_double_thresh, 
+                    conservative_thresh=conservative_thresh,
+                    liberal_thresh=liberal_thresh,
                     out_dict=out_dict)
 
             else:
@@ -214,6 +221,8 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                     img = plt.imread(image)
                     save_and_post_process(image,img, out_folder, 
                         invert_double_thresh=invert_double_thresh, 
+                        conservative_thresh=conservative_thresh,
+                        liberal_thresh=liberal_thresh,
                         out_dict=out_dict)
 
     else:
@@ -260,18 +269,22 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
         #print("img_compiled", img_compiled)
         save_and_post_process(image,img_compiled, out_folder, 
             invert_double_thresh=invert_double_thresh, 
+            conservative_thresh=conservative_thresh,
+            liberal_thresh=liberal_thresh,
             out_dict=out_dict)
 
-def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, out_dict=False):
+def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, conservative_thresh=160, liberal_thresh=200, out_dict=False):
     
-    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_70_512.png')
-    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_70_512.png')
+    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
     print("save_path_comp", save_path_comp)
     print("save_path_post", save_path_post)
     fm.save_output(img_compiled, save_path_comp)
     #print("inside in_situ_post_process, compile:", compile)
     post_processed = post_process(img_compiled, 
     invert_double_thresh=invert_double_thresh,
+    conservative_thresh=conservative_thresh,
+    liberal_thresh=liberal_thresh,
     out_dict=out_dict)
     #print("post_processed", post_processed)
     fm.save_output(post_processed[0], save_path_post)

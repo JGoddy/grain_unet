@@ -34,7 +34,9 @@ def run_inference(
         image_path=None, output_path=None, compile=False, 
         integration=3, target_resolution = 256, 
         image_transform = t.inference_transforms(256),
-        invert_double_thresh=True,out_dict=False, device = None):
+        invert_double_thresh=True,
+        conservative_thresh=160, liberal_thresh=200,
+        out_dict=False, device = None):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
     # if len(sys.argv) == 2:
@@ -62,6 +64,7 @@ def run_inference(
                     images_include = images_include, 
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
+                    conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
                     compile = compile, out_dict= out_dict,
                     target_resolution = target_resolution,
                     image_transform = image_transform)

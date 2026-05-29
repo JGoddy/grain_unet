@@ -6,7 +6,6 @@ import warnings
 from skimage import measure, io
 import numpy as np
 
-
 def double_thresh(img, conservative_thresh=160, liberal_thresh=200, \
                     invert_double_thresh=True, **kwargs):
     '''

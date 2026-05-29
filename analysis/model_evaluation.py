@@ -340,7 +340,7 @@ def compare_folders(gt_folder=None, gt_pattern = None, gt_exclude = "",
     Inputs: 
         -gt_folder   : str containing the path to the folder with the hand tracing (ground truth)
         -test_folder : str containing the path to the folder with the inferences or other comparison
-    Note: (*JGODDY does not think this is true*)
+    Note: 
         It is assumed that there is a 1:1 correspondence between the FoVs present in the gt and test folders, 
         and that the 1:1 correspondence can be reconstructed by sorting the names of the files using list.sort()
 
