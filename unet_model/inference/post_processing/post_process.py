@@ -35,7 +35,9 @@ import utility.transformation as t
 
 # Test inline comment #min_grain_area=100, prune_size=0
 # n_dilations = 3
-def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50, 
+# default values are for Wayne validation data
+# min_grain_area=70, prune_size=50, 
+def post_process(img_compiled, n_dilations=3, min_grain_area=0, prune_size=5, 
          convert_to_trans = True, invert_double_thresh=True, 
         conservative_thresh=160, liberal_thresh=200, out_dict=False, debug=False, **kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
@@ -165,7 +167,7 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
                 fm.save_output(post_processed, save_path_final_output)
 
 def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/", folders_exclude = [], folders_include = [],
-    images_pattern = '[!.]*.png', images_exclude = ['trace'], images_include = [],
+    postprocess_pattern = '[!.]*.png', postprocess_exclude = ['trace'], postprocess_include = [],
     compile=True, invert_double_thresh=True, conservative_thresh=160, liberal_thresh=200, integration = 3, out_dict=False,
     target_resolution = 256, image_transform = t.inference_transforms(256)):
  
@@ -173,9 +175,9 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
     print("folders_pattern", folders_pattern)
     print("folders_exclude", folders_exclude)
     print("folders_include", folders_include)
-    print("images_pattern", images_pattern)
-    print("images_exclude", images_exclude)
-    print("images_include", images_include)
+    print("postprocess_pattern", postprocess_pattern)
+    print("postprocess_exclude", postprocess_exclude)
+    print("postprocess_include", postprocess_include)
 
     # combine the images in each folder instead of a fixed number of images
     if integration == "folders":
@@ -192,7 +194,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
         print("******")
         #fovs = {}
         for folder in folders:
-            images = fm.get_file_names(folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
+            images = fm.get_file_names(folder, pattern = postprocess_pattern, exclude = postprocess_exclude, include = postprocess_include)
             if len(images) == 0:
                 raise ValueError('No images found in the specified folder')
             images = [str(image) for image in images]
@@ -226,13 +228,14 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                         out_dict=out_dict)
 
     else:
-        images = fm.get_file_names(in_folder, pattern = images_pattern, exclude = images_exclude, include = images_include)
+        images = fm.get_file_names(in_folder, pattern = postprocess_pattern, exclude = postprocess_exclude, include = postprocess_include)
         images = [str(image) for image in images]
         
         if len(images) == 0:
             raise ValueError('No images found in the specified folder')
         elif len(images) > 1: 
             print("there are", len(images), "images to post-process")
+            print("images", images)
         else:
             print("there is only one image to post-process")
         images.sort()
@@ -265,7 +268,10 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                 img_compiled = io.imread(image_compiled_path)
                 # save_path_comp = os.path.join(f"{out_folder}/compiled",f'compiled_{Path(img_compiled_path).stem}_95.png')
                 # save_path_post = os.path.join(f"{out_folder}/postprocessed",f'postprocess_{Path(img_compiled_path).stem}_95.png')
-            
+
+        # TODO: fix so that if integration >1, save_and_post_process
+        # is only called once at the end of the loop, but if 
+        # integration = 1, then it is called for each image.
         #print("img_compiled", img_compiled)
         save_and_post_process(image_compiled_path,img_compiled, out_folder, 
             invert_double_thresh=invert_double_thresh, 

@@ -10,7 +10,7 @@ from utility.settings import *
 import sys
 import utility.user_interface as user_interface
 from   unet_model.inference.post_processing.post_process import bulk_compile_and_pp, in_situ_post_process
-from   unet_model.inference.infer  import single_inference, multi_folder_inference
+from   unet_model.inference.infer  import single_inference, multi_folder_inference, in_situ_inference
 #from unet_model.inference.infer import in_situ_inference
 #from utility.settings import MODEL_NAME, TARGET_RESOLUTION, INFERENCE, PP_ACTIVATE, TEST_DATA_DIR, PREDICT_DATA_DIR, MODEL_PARAMS
 #import argparse
@@ -24,13 +24,17 @@ import utility.transformation as t
 #     import argparse
 #     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
+
+    
 def run_inference(
         model_path = None, #TODO: put a better default here
         prefix = None, #TODO: put a better default here
         mode=None, inference = True, post_process = True,
-        image_folder_path = None, inference_pattern = None, 
+        image_folder_path = None,  
         folders_pattern = None, folders_exclude = [], folders_include = [],
-        images_pattern = None, images_exclude = ['trace'], images_include = [],
+        inference_pattern = None, postprocess_pattern = None, 
+        inference_exclude = ['trace'], inference_include = [],
+        postprocess_exclude = ['trace'], postprocess_include = [],
         image_path=None, output_path=None, compile=False, 
         integration=3, target_resolution = 256, 
         image_transform = t.inference_transforms(256),
@@ -47,22 +51,44 @@ def run_inference(
     #     print("args", args)
     #     print("args.mode", args.mode)
 
-        if mode == "in_situ":
+        if mode == "multi_folder_inference":
         
             if inference:
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
                 multi_folder_inference(
                     model_path = model_path,
                     folder = image_folder_path, pattern = inference_pattern, 
-                    exclude = images_exclude, include = images_include,
+                    exclude = inference_exclude, include = inference_include,
                     target_resolution = target_resolution, image_transform = image_transform,
                     prefix = prefix, device = device) 
             if post_process: 
                 in_situ_post_process(in_folder = image_folder_path,
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
                     folders_include = folders_include,
-                    images_pattern = images_pattern, images_exclude = images_exclude, 
-                    images_include = images_include, 
+                    pattern = postprocess_pattern, exclude = postprocess_exclude, 
+                    include = postprocess_include, 
+                    out_folder = f"{image_folder_path}/post_process", 
+                    integration = integration, invert_double_thresh=invert_double_thresh,
+                    conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
+                    compile = compile, out_dict= out_dict,
+                    target_resolution = target_resolution,
+                    image_transform = image_transform)
+
+        elif mode == 'in situ':
+            if inference:
+                in_situ_inference(
+                    model_path=model_path, 
+                    folder=image_folder_path, pattern=inference_pattern, 
+                    exclude=inference_exclude, include=inference_include, 
+                    target_resolution=target_resolution,
+                    image_transform=image_transform,
+                    prefix=prefix,device=device)
+            if post_process:
+               in_situ_post_process(in_folder = image_folder_path,
+                    folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
+                    folders_include = folders_include,
+                    postprocess_pattern = postprocess_pattern, postprocess_exclude = postprocess_exclude, 
+                    postprocess_include = postprocess_include, 
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
