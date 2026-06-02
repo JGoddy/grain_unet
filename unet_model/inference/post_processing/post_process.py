@@ -37,13 +37,19 @@ import utility.transformation as t
 # n_dilations = 3
 # default values are for Wayne validation data
 # min_grain_area=70, prune_size=50, 
-def post_process(img_compiled, n_dilations=3, min_grain_area=0, prune_size=5, 
+def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50, 
          convert_to_trans = True, invert_double_thresh=True, 
         conservative_thresh=160, liberal_thresh=200, out_dict=False, debug=False, **kwargs):
     '''This tries to make clean skeletons with N Unet output image(s) from an FOV
     '''
     print("min_grain_area:", min_grain_area)
     print("prune_size:", prune_size)
+    print("n_dilations:", n_dilations)
+    print("conservative_thresh:", conservative_thresh)
+    print("liberal_thresh:", liberal_thresh)
+    print("invert_double_thresh:", invert_double_thresh)
+
+   
 
     print("inside post_process, compile:", compile)
     print("img_compiled shape:", img_compiled.shape)
@@ -169,7 +175,8 @@ def bulk_compile_and_pp(pattern=f'fov*/predict_{PREFIX}_{TARGET_RESOLUTION}/', f
 def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/", folders_exclude = [], folders_include = [],
     postprocess_pattern = '[!.]*.png', postprocess_exclude = ['trace'], postprocess_include = [],
     compile=True, invert_double_thresh=True, conservative_thresh=160, liberal_thresh=200, integration = 3, out_dict=False,
-    target_resolution = 256, image_transform = t.inference_transforms(256)):
+    target_resolution = 256, image_transform = t.inference_transforms(256),
+    n_dilations=3, min_grain_area = 70, prune_size = 50):
  
     print("in_folder", in_folder)
     print("folders_pattern", folders_pattern)
@@ -216,6 +223,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                     invert_double_thresh=invert_double_thresh, 
                     conservative_thresh=conservative_thresh,
                     liberal_thresh=liberal_thresh,
+                    n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
                     out_dict=out_dict)
 
             else:
@@ -225,6 +233,7 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
                         invert_double_thresh=invert_double_thresh, 
                         conservative_thresh=conservative_thresh,
                         liberal_thresh=liberal_thresh,
+                        n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
                         out_dict=out_dict)
 
     else:
@@ -277,9 +286,13 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
             invert_double_thresh=invert_double_thresh, 
             conservative_thresh=conservative_thresh,
             liberal_thresh=liberal_thresh,
+            n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
             out_dict=out_dict)
 
-def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, conservative_thresh=160, liberal_thresh=200, out_dict=False):
+def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, 
+        conservative_thresh=160, liberal_thresh=200,
+        n_dilations=3, min_grain_area=70, prune_size=50,
+        out_dict=False):
     
     save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
     save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
@@ -291,6 +304,7 @@ def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=T
     invert_double_thresh=invert_double_thresh,
     conservative_thresh=conservative_thresh,
     liberal_thresh=liberal_thresh,
+    n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
     out_dict=out_dict)
     #print("post_processed", post_processed)
     fm.save_output(post_processed[0], save_path_post)

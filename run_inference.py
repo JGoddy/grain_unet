@@ -40,6 +40,7 @@ def run_inference(
         image_transform = t.inference_transforms(256),
         invert_double_thresh=True,
         conservative_thresh=160, liberal_thresh=200,
+        n_dilations=3, min_grain_area=0, prune_size=5,
         out_dict=False, device = None):
     # user_interface.logoPrint()
     # print("sys.argv", sys.argv)
@@ -72,6 +73,7 @@ def run_inference(
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
                     compile = compile, out_dict= out_dict,
                     target_resolution = target_resolution,
+                    n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
                     image_transform = image_transform)
 
         elif mode == 'in situ':
@@ -94,6 +96,7 @@ def run_inference(
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
                     compile = compile, out_dict= out_dict,
                     target_resolution = target_resolution,
+                    n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
                     image_transform = image_transform)
             #return post_processed # debugging purposes
            
