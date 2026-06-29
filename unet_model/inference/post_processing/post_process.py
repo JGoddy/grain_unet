@@ -80,6 +80,7 @@ def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50,
 
     print("Skeletonizing")
     skeleton = morphology.skeletonize(img_closed)
+    
     print("Pruning")
     pruned_skeleton, _, _ = pcv.morphology.prune(skeleton.astype('uint8'), prune_size)
     #print("pruned_skeleton", pruned_skeleton)
