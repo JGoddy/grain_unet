@@ -17,6 +17,8 @@ def train_loop(model:unet.UNet=UNET_MODEL, loss_fn=LOSS_FN,
                optimizer=torch.optim.Adam, device=DEVICE_COMPUTE_PLATFORM, num_epochs=NUM_EPOCHS, num_class = 1,
                val_dataloader=None, train_dataloader=None):
     
+    
+    
     loss_fn = nn.BCEWithLogitsLoss()
     model, optimizer = unet.initialize_model_training(pretrained_weights=None, num_class = num_class)
 
