@@ -4,7 +4,9 @@ from unet_model.training.ImageDataset import ImageDataset
 from torch.utils.data import random_split
 import torch
 
-def get_train_data_loaders(image_path:str = IMAGE_PATH, label_path:str = LABEL_PATH, training_split:float = TRAINING_SPLIT, batch_size:int = BATCH_SIZE, num_workers=NUM_WORKERS, transform_generator=training_transforms()):
+def get_train_data_loaders(image_path:str = 'training_data/image/', label_path:str = 'training_data/nouveaux_labels/', 
+                           training_split:float = 0.9, batch_size:int = 5, 
+                           num_workers=0, transform_generator=t.training_transforms(target_resolution=256, prob_flip=1.0)):
     
 
     transforms = transform_generator()

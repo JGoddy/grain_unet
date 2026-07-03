@@ -16,13 +16,13 @@ init_training()
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
 
 
-def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch):
+def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch, num_epochs, saving_rate):
     
     model.train(True) 
     train_losses = []
     val_losses = []
 
-    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Training") 
+    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{num_epochs} - Training") 
 
     for images,labels, names in tqdm_train_dataloader: 
 
@@ -33,12 +33,13 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
 
 
     #saves model params after a certain amount of epochs 
-    if epoch % SAVING_RATE == 0: 
+    if epoch % saving_rate == 0: 
+        #TODO: figure out what the MODEL_PARAMS terms is and how else to generate it 
             torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
        
 
         #validation step
-    tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{NUM_EPOCHS} - Validation")
+    tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{num_epochs} - Validation")
 
     with torch.no_grad():
         for images, labels, names in tqdm_val_dataloader:
@@ -52,7 +53,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     train_losses.append(train_loss)
     val_losses.append(val_loss)
    
-    print(f"Epoch {epoch+1}/{NUM_EPOCHS}:")
+    print(f"Epoch {epoch+1}/{num_epochs}:")
     print(f"Training Loss: {train_loss}")
     print(f"Validation Loss: {val_loss}")
 
@@ -61,7 +62,9 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     return train_loss, val_loss
 
 
-def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=DEVICE_COMPUTE_PLATFORM):
+def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device='cpu'):
+    if device == 'cpu':
+        raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
     model.train(True) 
     optimizer.zero_grad() 
     batch_images = batch_images.to(device)
@@ -79,7 +82,10 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     optimizer.step() 
     return loss, outputs
 
-def validation_step(batch_images, batch_labels, model, loss_fn, device=DEVICE_COMPUTE_PLATFORM):
+def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
+    if device == 'cpu':
+        raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
+
     model.train(False)  # Set the model to evaluation mode
     with torch.no_grad():
         model.train(False) 
@@ -96,6 +102,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device=DEVICE_CO
         return loss, outputs
 
 # I don't think this function gets used 
+#TODO: figure out what the MODEL_PARAMS terms is and how else to generate it 
 def save_model(model, num_epochs=-1, epoch=-1):
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{epoch}.pth')
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{num_epochs}.pth')

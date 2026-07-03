@@ -148,8 +148,11 @@ class UNet(nn.Module):
         return out
 
 # Function to load model
-def load_model_weights(model_path:str|Path|UNet, device:str = DEVICE_COMPUTE_PLATFORM, num_class:int=1)->UNet:
+def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:int=1)->UNet:
     
+    if device == 'cpu':
+        raise ValueError("CPU is not supported for training or inference. \n Please use a GPU for training or inference.")
+
     if isinstance(model_path, UNet):
         model = model_path
         return model
@@ -167,14 +170,17 @@ def load_model_weights(model_path:str|Path|UNet, device:str = DEVICE_COMPUTE_PLA
         model.eval()  # Set the model to evaluation mode
         return model
     
-def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1)->None:
+def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1, device='cpu', learning_rate=0.001)->None:
+    if device == 'cpu':
+        raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
+
     if pretrained_weights:
-        unet_model = load_model_weights(pretrained_weights, DEVICE_COMPUTE_PLATFORM)
+        unet_model = load_model_weights(pretrained_weights, device)
     else:
         unet_model = UNet(out_channels=num_class)
 
-    print(f"Compute platform is: {DEVICE_COMPUTE_PLATFORM}")
+    print(f"Compute platform is: {device}")
         
-    unet_model.to(DEVICE_COMPUTE_PLATFORM)
-    optimizer = torch.optim.Adam(unet_model.parameters(), lr=LEARNING_RATE)
+    unet_model.to(device)
+    optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
     return unet_model, optimizer
