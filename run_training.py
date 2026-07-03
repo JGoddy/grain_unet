@@ -38,7 +38,7 @@ def train(model:unet.UNet=MODEL_PARAMS, image_path=IMAGE_PATH, label_path=LABEL_
     print(f'image path: { image_path}')
     train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, transform_generator=transforms)
     user_interface.startTrainingLogoPrint()
-    print(f"Training the model using {loss_fn}")
+    print(f"Training the model using {loss_fn} and dangling endpoints penalty")
     train_loop(model=model, loss_fn=loss_fn, optimizer=optimizer, device=device, num_epochs=num_epochs, train_dataloader=train_dataloader, val_dataloader=val_dataloader)
     
     plot_loss_points(train_losses, val_losses)
