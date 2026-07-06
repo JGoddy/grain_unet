@@ -1,5 +1,6 @@
 from utility.settings import *
-from utility.transformation import training_transforms
+#from utility.transformation import training_transforms
+import utility.transformation as t
 from unet_model.training.ImageDataset import ImageDataset
 from torch.utils.data import random_split
 import torch

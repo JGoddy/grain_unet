@@ -3,14 +3,17 @@
 # init_training() 
 #from utility.settings import *
 
-from unet_model.training.train import epoch
-import unet_model.unet as unet
-from unet_model.training import training_datasets
-from utility import user_interface
 #from utility.transformation import training_transforms
 import utility.transformation as t
 
 from utility.plotting import plot_loss_points
+
+
+from unet_model.training.train import epoch
+import unet_model.unet as unet
+from unet_model.training import training_datasets
+from utility import user_interface
+
 
 from unet_model.losses import dice_loss
 
