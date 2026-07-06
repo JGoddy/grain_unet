@@ -13,6 +13,10 @@ import utility.transformation as t
 from utility.plotting import plot_loss_points
 
 from unet_model.losses import dice_loss
+
+import torch
+import torch.nn as nn
+
 train_losses = []
 val_losses = []
 
@@ -32,7 +36,7 @@ def train_loop(model=unet, loss_fn=nn.BCEWithLogitsLoss(),
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
     #loss_fn = nn.BCEWithLogitsLoss()
-    model, optimizer = unet.initialize_model_training(pretrained_weights=pretrained_weights, num_class = num_class
+    model, optimizer = unet.initialize_model_training(pretrained_weights=pretrained_weights, num_class = num_class,
                                                       device=device, learning_rate=learning_rate)
 
 
@@ -48,7 +52,7 @@ def train_loop(model=unet, loss_fn=nn.BCEWithLogitsLoss(),
 
 def train(model:unet, image_path='training_data/image/', label_path='training_data/nouveaux_labels/', 
           loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.optim.Adam, 
-          device='cuda', num_epochs = 100, image_transform=t.training_transforms(target_resolution=256, prob_flip=1.0)):
+          device='cuda', num_epochs = 100, image_transforms=t.training_transforms(target_resolution=256, prob_flip=1.0)):
     
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
