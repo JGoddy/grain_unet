@@ -15,7 +15,9 @@ hdf5_dump
 **/desktop.ini
 test_data/
 test_data.zip
-training_data/
+training_data/*predict*
+training_data/model_weights/*
+training_data/nouveaux_labels/*.csv
 Wayne_validation_data/
 *.pth
 folder/
