@@ -16,18 +16,22 @@ INVERT = False
 class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, image_dir:str, label_dir:str, vertical_flip = False, horizontal_flip = False, other_transforms = False, **kwargs):
         
-        
+        # made itmore robust to ignore non-image files
         self.image_dir = image_dir
         self.label_dir = label_dir
 
         self.image_files = sorted(os.listdir((self.image_dir)))
         self.label_files = sorted(os.listdir(self.label_dir))
 
-        if '.Ds_store' in self.label_files:
-            self.label_files.remove('.Ds_Store')
+
+        self.label_files = list(filter(lambda x: x.endswith('.png') or x.endswith('.tif') or x.endswith('.jpg'), self.label_files))
+        self.image_files = list(filter(lambda x: x.endswith('.png') or x.endswith('.tif') or x.endswith('.jpg'), self.image_files))
+
+        # if '.Ds_store' in self.label_files:
+        #     self.label_files.remove('.Ds_Store')
     
-        if '.Ds_store' in self.image_files:
-            self.image_files.remove('.Ds_Store')
+        # if '.Ds_store' in self.image_files:
+        #     self.image_files.remove('.Ds_Store')
 
         self.vertical_flip = vertical_flip
         self.horizontal_flip = horizontal_flip

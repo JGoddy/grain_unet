@@ -28,11 +28,10 @@ val_losses = []
 #                num_epochs=NUM_EPOCHS, num_class = 1,
 #                val_dataloader=None, train_dataloader=None):
 
-def train_loop(model=unet, loss_fn=nn.BCEWithLogitsLoss(), 
-                optimizer=torch.optim.Adam, pretrained_weights=None,
-                num_epochs=100, num_class = 1, saving_rate=5, learning_rate=0.001,
+def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss(), 
+                optimizer=torch.optim.Adam, num_epochs=100, num_class = 1, saving_rate=5, learning_rate=0.001,
                 val_dataloader=None, train_dataloader=None,
-                device='cpu', image_path='training_data/image/', label_path='training_data/nouveaux_labels/'):
+                device='cpu'): # , image_path='training_data/image/', label_path='training_data/nouveaux_labels/'):
     
     
     if device == 'cpu':
@@ -53,9 +52,11 @@ def train_loop(model=unet, loss_fn=nn.BCEWithLogitsLoss(),
 #           loss_fn:callable=LOSS_FN, optimizer=torch.optim.Adam, 
 #           device=DEVICE_COMPUTE_PLATFORM, num_epochs = NUM_EPOCHS, transforms=None):
 
-def train(model:unet, image_path='training_data/image/', label_path='training_data/nouveaux_labels/', 
-          loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.optim.Adam, 
-          device='cuda', num_epochs = 100, image_transforms=t.training_transforms(target_resolution=256, prob_flip=1.0)):
+def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.optim.Adam, 
+         num_epochs=100, image_transforms=t.training_transforms(target_resolution=256, prob_flip=1.0),
+         pretrained_weights=None, num_class=1, saving_rate=5, learning_rate=0.001, 
+         image_path = 'training_data/image/', label_path = 'training_data/nouveaux_labels/',
+         training_split = 0.9, batch_size = 5, num_workers = 0, device='cpu'):
     
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
@@ -63,11 +64,16 @@ def train(model:unet, image_path='training_data/image/', label_path='training_da
     # Train the model 
     #transforms = training_transforms
     print(f'image path: { image_path}')
-    train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, transform_generator=image_transforms)
+    train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
+                                                                                training_split = training_split, batch_size=batch_size,
+                                                                                num_workers=num_workers, transform_generator=image_transforms)
     user_interface.startTrainingLogoPrint()
+    #print(f"Training the model using {loss_fn} and dangling endpoints penalty")
     print(f"Training the model using {loss_fn} and dangling endpoints penalty")
-    train_loop(model=model, loss_fn=loss_fn, optimizer=optimizer, device=device, num_epochs=num_epochs, train_dataloader=train_dataloader, val_dataloader=val_dataloader)
-    #TODO: fix plot_loss_points function to not use MyUnetConfig.ini file
+
+    train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer,
+                num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate,
+                learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=val_dataloader, device=device)
     plot_loss_points(train_losses, val_losses)
     print("Training complete.")
 

@@ -26,8 +26,8 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
 
     for images,labels, names in tqdm_train_dataloader: 
 
-        print("images", images.shape)
-        print("labels", labels.shape)
+        # print("images", images.shape)
+        # print("labels", labels.shape)
         loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)        
         train_losses.append(loss.item())
 
@@ -72,12 +72,16 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     outputs = model.forward(batch_images)
     # what is the shape of outputs? 
     #num_dangling_endpoints = num_dangling_endpoints(outputs)
-    are_there_dangling_endpoints = are_there_dangling_endpoints(outputs)
-    if are_there_dangling_endpoints:
-        loss = 10*loss_fn(outputs, batch_labels)
-    else:
-        loss = loss_fn(outputs, batch_labels)
-    #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
+    #are_there_dangling_endpoints = are_there_dangling_endpoints(outputs)
+    loss = loss_fn(outputs, batch_labels)
+
+    # if are_there_dangling_endpoints(outputs):
+    #     loss = 10*loss_fn(outputs, batch_labels)
+    # else:
+    #     loss = loss_fn(outputs, batch_labels)
+
+    # #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
+
     loss.backward()
     optimizer.step() 
     return loss, outputs

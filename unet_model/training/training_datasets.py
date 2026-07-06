@@ -10,7 +10,7 @@ def get_train_data_loaders(image_path:str = 'training_data/image/', label_path:s
                            num_workers=0, transform_generator=t.training_transforms(target_resolution=256, prob_flip=1.0)):
     
 
-    transforms = transform_generator()
+    transforms = transform_generator #this used to be called, transform_generator() 
     imageset = ImageDataset(
         image_dir=image_path,
         label_dir=label_path,
