@@ -37,8 +37,11 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
 
     #saves model params after a certain amount of epochs 
     if epoch % saving_rate == 0: 
-        ##TODO: figure out what the MODEL_PARAMS term is and how else to generate it 
+        ##TODO: think about whether to save as epoch (python starts from 0)
+        # or epoch + 1 (to start from 1, as in the print statements)
+        # after the first (zeroth) epoch, the model saves 
         #torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
+
         torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch+1}.pth")
 
         #validation step
