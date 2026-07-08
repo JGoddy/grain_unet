@@ -25,13 +25,15 @@ import utility.transformation as t
 #     import utility.user_interface as user_interface
     #pattern = "fov*/raw/*.tif" #Original for new "test data", do not lose
 
-TODO: FIX THE PATHS SO THAT THE SUMMARY CSV IS SAVED IN THE TRAINING_SUMMARIES FOLDER
-TODO: NOT THE LABELS FOLDER 
+# TODO: FIX THE PATHS SO THAT THE SUMMARY CSV IS SAVED IN THE TRAINING_SUMMARIES FOLDER
+# TODO: NOT THE LABELS FOLDER 
     
 def run_inference(
         model_path = None, #TODO: put a better default here
         prefix = None, #TODO: put a better default here
-        mode=None, inference = True, post_process = True,
+        mode=None, 
+        inference = True, 
+        post_process = True,
         image_folder_path = None,  
         folders_pattern = None, folders_exclude = [], folders_include = [],
         inference_pattern = None, postprocess_pattern = None, 
