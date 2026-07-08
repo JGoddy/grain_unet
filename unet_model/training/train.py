@@ -16,7 +16,7 @@ init_training()
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
 
 
-def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch, num_epochs, saving_rate):
+def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch, num_epochs, saving_rate, weights_save_folder_path):
     
     model.train(True) 
     train_losses = []
@@ -26,25 +26,30 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
 
     for images,labels, names in tqdm_train_dataloader: 
 
+        #NOTE: The training and validation outputs are not being used so they don't have to be returned 
         # print("images", images.shape)
         # print("labels", labels.shape)
-        loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)        
-        train_losses.append(loss.item())
+        #loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)    
+
+        train_loss = training_step(images, labels, model, loss_fn, optimizer, device) 
+        train_losses.append(train_loss.item())
 
 
     #saves model params after a certain amount of epochs 
     if epoch % saving_rate == 0: 
-        #TODO: figure out what the MODEL_PARAMS terms is and how else to generate it 
-            torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
-       
+        ##TODO: figure out what the MODEL_PARAMS term is and how else to generate it 
+        #torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
+        torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch+1}.pth")
 
         #validation step
     tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{num_epochs} - Validation")
 
     with torch.no_grad():
         for images, labels, names in tqdm_val_dataloader:
-            loss, vlaidation_outputs = validation_step(images, labels, model, loss_fn, device)
-            val_losses.append(loss.item())
+            #val_loss, validation_outputs = validation_step(images, labels, model, loss_fn, device)
+            val_loss = validation_step(images, labels, model, loss_fn, device)
+
+            val_losses.append(val_loss.item())
     
     # Logging the metrics
     train_loss = sum(train_losses) / len(train_losses)
@@ -73,18 +78,27 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     # what is the shape of outputs? 
     #num_dangling_endpoints = num_dangling_endpoints(outputs)
     #are_there_dangling_endpoints = are_there_dangling_endpoints(outputs)
-    loss = loss_fn(outputs, batch_labels)
+    #loss = loss_fn(outputs, batch_labels)
 
-    # if are_there_dangling_endpoints(outputs):
-    #     loss = 10*loss_fn(outputs, batch_labels)
-    # else:
-    #     loss = loss_fn(outputs, batch_labels)
+    #NOTE: hardcoded for these 1 channel images, outputs (from dataloader) has shape 
+    # (batch_size, 1, image_width, image_height) 
+    # or maybe (batch_size, 1, image_height, image_width)
+    # I'm not sure which is the height and which is the width since 
+    # the images are square so the height and width are the same
+    #TODO: check this with Wayne's validation data, for example, 
+    # since those images are not square
+    for i in range(outputs.shape[0]):
+        if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+            loss = 10*loss_fn(outputs, batch_labels)
+            break
+        else:
+            loss = loss_fn(outputs, batch_labels)
 
     # #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
 
     loss.backward()
     optimizer.step() 
-    return loss, outputs
+    return loss  #, outputs
 
 def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
     if device == 'cpu':
@@ -97,13 +111,18 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
         batch_labels = batch_labels.to(device)
         outputs = model.forward(batch_images)
         
-        are_there_dangling_endpoints = are_there_dangling_endpoints(outputs)
-        if are_there_dangling_endpoints:
-            loss = 10*loss_fn(outputs, batch_labels)
-        else:
-            loss = loss_fn(outputs, batch_labels)
-        #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
-        return loss, outputs
+        #NOTE: see note in training_step
+        for i in range(outputs.shape[0]):
+            if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+                loss = 10*loss_fn(outputs, batch_labels)
+                break
+            else:
+                loss = loss_fn(outputs, batch_labels)
+
+        return loss #, outputs
+                
+
+    # #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
 
 # I don't think this function gets used 
 #TODO: figure out what the MODEL_PARAMS terms is and how else to generate it 
