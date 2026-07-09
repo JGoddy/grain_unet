@@ -115,7 +115,7 @@ def in_situ_inference(model_path=None, folder='', pattern=None,
         print(f"Found {len(list(image_paths))} images")
     #save_paths = [os.path.join(path.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
     #save_paths = [os.path.join(path.parent, f'compiled/{model_type}/{model_path.split("/")[-2]}_{model_path.split("/")[-1].split(".")[0]}',f"compiled_{path.name}") for path in image_paths]
-    save_paths = [os.path.join(path.parent, 'inferenced', f'{prefix}',f"compiled_{path.name}") for path in image_paths]
+    save_paths = [os.path.join(path.parent, 'inferenced', f'{prefix}',f"inference_{path.name}") for path in image_paths]
 
     multi_inference(image_paths = image_paths, output_paths = save_paths, model = model, target_resolution=target_resolution, image_transform=image_transform, device=device)
 
