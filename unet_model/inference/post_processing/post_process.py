@@ -230,7 +230,8 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
             else:
                 for image in images:
                     img = plt.imread(image)
-                    save_and_post_process(image,img, out_folder, 
+                    save_and_post_process(image,img, out_folder,
+                        integration, 
                         invert_double_thresh=invert_double_thresh, 
                         conservative_thresh=conservative_thresh,
                         liberal_thresh=liberal_thresh,
@@ -283,23 +284,27 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
         # is only called once at the end of the loop, but if 
         # integration = 1, then it is called for each image.
         #print("img_compiled", img_compiled)
-        save_and_post_process(image_compiled_path,img_compiled, out_folder, 
-            invert_double_thresh=invert_double_thresh, 
-            conservative_thresh=conservative_thresh,
-            liberal_thresh=liberal_thresh,
-            n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
-            out_dict=out_dict)
+            save_and_post_process(image_compiled_path,img_compiled, out_folder,
+                integration, 
+                invert_double_thresh=invert_double_thresh, 
+                conservative_thresh=conservative_thresh,
+                liberal_thresh=liberal_thresh,
+                n_dilations=n_dilations, min_grain_area=min_grain_area, prune_size=prune_size,
+                out_dict=out_dict)
 
-def save_and_post_process(image,img_compiled, out_folder, invert_double_thresh=True, 
+def save_and_post_process(image,img_compiled, out_folder, integration=False,
+        invert_double_thresh=True, 
         conservative_thresh=160, liberal_thresh=200,
         n_dilations=3, min_grain_area=70, prune_size=50,
         out_dict=False):
     
-    save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+    if not integration == 1:
+        save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
+        print("save_path_comp", save_path_comp)
+        fm.save_output(img_compiled, save_path_comp)
+        
     save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
-    print("save_path_comp", save_path_comp)
     print("save_path_post", save_path_post)
-    fm.save_output(img_compiled, save_path_comp)
     #print("inside in_situ_post_process, compile:", compile)
     post_processed = post_process(img_compiled, 
     invert_double_thresh=invert_double_thresh,
