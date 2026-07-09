@@ -179,6 +179,9 @@ def in_situ_post_process(in_folder, out_folder, folders_pattern = "fov*/predict/
     target_resolution = 256, image_transform = t.inference_transforms(256),
     n_dilations=3, min_grain_area = 70, prune_size = 50):
  
+    print("*"*20)
+    print("BEGINNING POSTPROCESSING")
+    print("*"*20)
     print("in_folder", in_folder)
     print("folders_pattern", folders_pattern)
     print("folders_exclude", folders_exclude)
@@ -302,7 +305,7 @@ def save_and_post_process(image,img_compiled, out_folder, integration=False,
         save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
         print("save_path_comp", save_path_comp)
         fm.save_output(img_compiled, save_path_comp)
-        
+
     save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
     print("save_path_post", save_path_post)
     #print("inside in_situ_post_process, compile:", compile)

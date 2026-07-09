@@ -48,6 +48,7 @@ def single_inference(image_path:str|Path, output_path:str|Path, model:unet.UNet|
         raise ValueError('The model parameter must be an instance of the UNet class or a path to a model weights file.')
 
     output_np = run_inference(model = model, image = image_path, target_resolution = target_resolution, image_transform = image_transform, device = device)
+    print("output_path:", output_path)
     fm.save_output(output_np, output_path)
     #[REF] save only once, there's a bug here
 
@@ -95,7 +96,7 @@ def multi_folder_inference(model_path=None, folder='', pattern:str="fov*/*.tif",
     save_paths = [os.path.join(path.parent.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
     multi_inference(image_paths=image_paths, output_paths=save_paths, model=model,target_resolution=target_resolution,image_transform=image_transform,device=device)
 
-def in_situ_inference(model_path=None,folder='', pattern=None, 
+def in_situ_inference(model_path=None, folder='', pattern=None, 
     exclude = ['trace'], include = [], 
     target_resolution=256, image_transform = t.inference_transforms(256),
     prefix = None, device = None):
@@ -112,7 +113,10 @@ def in_situ_inference(model_path=None,folder='', pattern=None,
         raise ValueError('\n\nNo images found in the specified folder')
     else:
         print(f"Found {len(list(image_paths))} images")
-    save_paths = [os.path.join(path.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
+    #save_paths = [os.path.join(path.parent, f'predict_{prefix}_{target_resolution}', f'predict_{path.name}') for path in image_paths]
+    #save_paths = [os.path.join(path.parent, f'compiled/{model_type}/{model_path.split("/")[-2]}_{model_path.split("/")[-1].split(".")[0]}',f"compiled_{path.name}") for path in image_paths]
+    save_paths = [os.path.join(path.parent, 'inferenced', f'{prefix}',f"compiled_{path.name}") for path in image_paths]
+
     multi_inference(image_paths = image_paths, output_paths = save_paths, model = model, target_resolution=target_resolution, image_transform=image_transform, device=device)
 
    # return os.path.join(folder, f'predict_{model_path}_{target_resolution}') #return the folder where the predictions are saved

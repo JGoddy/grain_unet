@@ -57,9 +57,10 @@ def run_inference(
     #     print("args.mode", args.mode)
 
         if mode == "multi_folder_inference":
-        
+            
             if inference:
                 # TODO: SHOULD THIS BE IN_SITU INFERENCE?
+                # TODO: FIX THE PATHS HERE
                 multi_folder_inference(
                     model_path = model_path,
                     folder = image_folder_path, pattern = inference_pattern, 
@@ -70,8 +71,8 @@ def run_inference(
                 in_situ_post_process(in_folder = image_folder_path,
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
                     folders_include = folders_include,
-                    pattern = postprocess_pattern, exclude = postprocess_exclude, 
-                    include = postprocess_include, 
+                    postprocess_pattern = postprocess_pattern, postprocess_exclude = postprocess_exclude, 
+                    postprocess_include=postprocess_include, 
                     out_folder = f"{image_folder_path}/post_process", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
@@ -90,12 +91,14 @@ def run_inference(
                     image_transform=image_transform,
                     prefix=prefix,device=device)
             if post_process:
-               in_situ_post_process(in_folder = image_folder_path,
+               in_situ_post_process(
+                    #in_folder = image_folder_path,
+                    in_folder=f"{image_folder_path}/inferenced/{prefix}",
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
                     folders_include = folders_include,
                     postprocess_pattern = postprocess_pattern, postprocess_exclude = postprocess_exclude, 
                     postprocess_include = postprocess_include, 
-                    out_folder = f"{image_folder_path}/post_process", 
+                    out_folder = f"{image_folder_path}/post_process/{prefix}", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
                     compile = compile, out_dict= out_dict,
@@ -104,6 +107,30 @@ def run_inference(
                     image_transform = image_transform)
             #return post_processed # debugging purposes
            
+            # the input Nouveaux images are at
+            # training_data/nouveaux_and_nuevo_images/01.png
+            #the inferenced Nouveaux images are at
+            #training_data/nouveaux_and_nuevo_images/predict_predict_unet_nouveaux_dangling_enpoints_penalty_96_256/predict_01.png
+            #should_be
+            #training_data/nouveaux_and_nuevo_images/compiled/unet_nouveaux_dangling_endpoints_penalty_2026-07-08_11:02_42_epoch_96/compiled_01.png
+            
+            #image_folder_path = training_data/nouveaux_and_nuevo_images
+            #prefix SHOULD BE unet_nouveaux_dangling_endpoints_penalty
+            #f"{image_folder_path}/compiled/{prefix}
+            #postprocess_include: compiled 
+
+            #path.parent, f"compiled/{model_path.split("/")[-2]}_{model_path.split("/")[-1].split(".")[0]}",f'compiled_{path.name}')
+
+
+
+
+            #the postprocessed images are at
+            #training_data/nouveaux_and_nuevo_images/postprocess/postprocess_01_95_512.png
+            #should be 96
+            # the weights file is 
+            #model_weights/nouveaux_dangling_endpoints_penalty/2026-07-08_11:02:42/epoch_96.pth
+             
+
         elif mode == "post_process":
             #print(f"fov*/predict_{MODEL_NAME}_{TARGET_RESOLUTION}/")
 
