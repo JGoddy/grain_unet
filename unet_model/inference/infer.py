@@ -107,7 +107,7 @@ def in_situ_inference(model_path=None, folder='', pattern=None,
     print(f"Loaded model from {model_path}")
     print("Compute platform is: ", device)
     print(f"Looking for images in: {folder}/{pattern} excluding: {exclude}, including: {include}")
-    image_paths = fm.get_file_names(folder, pattern = pattern, exclude = exclude, include = include)
+    image_paths = sorted(fm.get_file_names(folder, pattern = pattern, exclude = exclude, include = include))
     
     if len(list(image_paths)) == 0:
         raise ValueError('\n\nNo images found in the specified folder')
