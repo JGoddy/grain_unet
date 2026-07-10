@@ -7,13 +7,14 @@
 import utility.transformation as t
 
 from utility.plotting import plot_loss_points
+from pathlib import Path
 
 
 from unet_model.training.train import epoch
 import unet_model.unet as unet
 from unet_model.training import training_datasets
 from utility import user_interface
-
+import re
 
 from unet_model.losses import dice_loss
 
@@ -32,14 +33,13 @@ val_losses = []
 #                val_dataloader=None, train_dataloader=None):
 
 def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss(), 
-                optimizer=torch.optim.Adam, num_epochs=100, num_class = 1, saving_rate=5, 
+                optimizer=torch.optim.Adam, start_epoch=0, num_epochs=100, num_class = 1, saving_rate=5, 
                 learning_rate=0.001, weights_save_folder_path = f"model_weights/nouveaux_dangling_endpoints_penalty_{datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}/",
                 val_dataloader=None, train_dataloader=None,
                 device='cpu'): # , image_path='training_data/image/', label_path='training_data/nouveaux_labels/'):
     
-     #create the folder to save the weights
-    os.makedirs(weights_save_folder_path,exist_ok=True)
-    
+
+
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
@@ -48,7 +48,7 @@ def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss
                                                       device=device, learning_rate=learning_rate)
 
 
-    for epoch_ii in range(num_epochs):
+    for epoch_ii in range(start_epoch,num_epochs):
         train_loss, val_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
         train_losses.append(train_loss)
         val_losses.append(val_loss)
@@ -69,6 +69,15 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
 
+    #NOTE: assuming weights file name contains epoch_XXX
+    if pretrained_weights != None:
+        if weights_save_folder_path == None:
+            weights_save_folder_path = Path(pretrained_weights).parent
+        start_epoch = int(re.search(r'(?<=epoch_)\d+',pretrained_weights)[0])
+    else:
+        start_epoch=0
+
+
     #create the folder to save the weights
     os.makedirs(weights_save_folder_path,exist_ok=True)
     # # I programatically put the timestamp 
@@ -87,7 +96,7 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     print(f"Training the model using {loss_fn} and dangling endpoints penalty")
     #print(f"Training the model using {loss_fn}")
 
-    train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer,
+    train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer, start_epoch = start_epoch,
                 num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
                 learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=val_dataloader, device=device)
     plot_loss_points(train_losses, val_losses)

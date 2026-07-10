@@ -22,7 +22,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     train_losses = []
     val_losses = []
 
-    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{num_epochs} - Training") 
+    tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch}/{num_epochs} - Training") 
 
     for images,labels, names in tqdm_train_dataloader: 
 
@@ -42,10 +42,10 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         # after the first (zeroth) epoch, the model saves 
         #torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
 
-        torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch+1}.pth")
+        torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch}.pth")
 
         #validation step
-    tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch+1}/{num_epochs} - Validation")
+    tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch}/{num_epochs} - Validation")
 
     with torch.no_grad():
         for images, labels, names in tqdm_val_dataloader:
