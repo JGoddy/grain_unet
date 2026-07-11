@@ -90,7 +90,25 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     # the images are square so the height and width are the same
     #TODO: check this with Wayne's validation data, for example, 
     # since those images are not square
+
+
+    #NOTE:The dangling enpoints check doesn't work 
+    # unless the image is binary pixel values all 0 and 1 (or 255)
+    #because otherwise the boundary is not all completely black
+    # 
+    # Check the maximum values because I don't think they are 
+    # capped at one (or 255) but I'm not sure.  
+
     for i in range(outputs.shape[0]):
+        # if np.max(outputs[i,0]) <= 1.0: 
+        #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+        #         loss = 10*loss_fn(outputs,batch_labels)
+        #         break
+        # elif np.max(outputs[i,0]) <= 1.0: 
+        #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+        #         loss = 10*loss_fn(outputs,batch_labels)
+        #         break     
+
         if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
             loss = 10*loss_fn(outputs, batch_labels)
             break

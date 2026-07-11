@@ -101,6 +101,7 @@ def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50,
         out_dict = None
 
         # convert pruned_skeleton from black on white to white on black
+        #TODO: maybe use skimage.util.invert instead to invert?
     return [-1.0*(pruned_skeleton-1.0), out_dict]
 
 
@@ -305,8 +306,8 @@ def save_and_post_process(image,img_compiled, out_folder, integration=False,
         save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
         print("save_path_comp", save_path_comp)
         fm.save_output(img_compiled, save_path_comp)
-
-    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_95_512.png')
+    #TODO: make ths save path a function parameter
+    save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_dangling_endpoints_penalty 200_512.png')
     print("save_path_post", save_path_post)
     #print("inside in_situ_post_process, compile:", compile)
     post_processed = post_process(img_compiled, 
