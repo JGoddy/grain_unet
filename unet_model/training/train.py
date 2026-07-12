@@ -102,7 +102,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     loss_factor = 1
     for i in range(outputs.shape[0]):
          
-        if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten.shape():
+        if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
             # loss = 10*loss_fn(outputs,batch_labels)
             # break
             binary = False 
@@ -112,7 +112,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
             binary = True
 
         # elif np.max(outputs[i,0]) <= 1.0: 
-        #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+        #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten().shape():
         #         loss = 10*loss_fn(outputs,batch_labels)
         #         break     
         # print("*"*20)
