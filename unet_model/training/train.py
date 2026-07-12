@@ -168,7 +168,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
         loss_factor = 1
 
         for i in range(outputs.shape[0]):
-            if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+            if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
                 binary = False 
                 loss_factor=5
             
