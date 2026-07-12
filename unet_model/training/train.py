@@ -96,26 +96,54 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     # unless the image is binary pixel values all 0 and 1 (or 255)
     #because otherwise the boundary is not all completely black
     # 
-    # Check the maximum values because I don't think they are 
-    # capped at one (or 255) but I'm not sure.  
-
+     
+    # binarization_loss_factor = 1 
+    # dangling_endpoints_loss_factor=1
+    loss_factor = 1
     for i in range(outputs.shape[0]):
-        # if np.max(outputs[i,0]) <= 1.0: 
-        #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
-        #         loss = 10*loss_fn(outputs,batch_labels)
-        #         break
+         
+        if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+            # loss = 10*loss_fn(outputs,batch_labels)
+            # break
+            binary = False 
+            loss_factor=5
+            
+        else: 
+            binary = True
+
         # elif np.max(outputs[i,0]) <= 1.0: 
         #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
         #         loss = 10*loss_fn(outputs,batch_labels)
         #         break     
+        # print("*"*20)
+        # print("interation:", i)
+        # print("maximum outputs value:" ,torch.max(outputs[i,0]))
+        # print("minimum outputs value:", torch.min(outputs[i,0]))
 
+        # print("maximum labels value:", torch.max(batch_labels[i,0]))
+        # print("minimum labels value:", torch.min(batch_labels[i,0]))
+
+        # print("individual loss:", loss_fn(outputs[i,0], batch_labels[i,0]))
+        # print("batch loss:", loss_fn(outputs, batch_labels))
+        # print("*"*20)
+
+
+        # if binary and ... 
         if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
-            loss = 10*loss_fn(outputs, batch_labels)
-            break
+            # loss = 10*loss_fn(outputs, batch_labels)
+            # #break
+            dangling_endpoints = True
+            loss_factor*=2
         else:
-            loss = loss_fn(outputs, batch_labels)
+            dangling_endpoints = False
 
-    # #loss = loss_fn(outputs, batch_labels) + num_dangling_endpoints #maybe multiply by a constant?
+        if binary == False or dangling_endpoints == True:
+            break
+
+        # else:
+        #     loss = loss_fn(outputs, batch_labels)
+
+    loss = loss_fn(outputs, batch_labels)*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
 
     loss.backward()
     optimizer.step() 
@@ -133,12 +161,32 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
         outputs = model.forward(batch_images)
         
         #NOTE: see note in training_step
+
+        # binarization_loss_factor = 1 
+        # dangling_endpoints_loss_factor=1
+
+        loss_factor = 1
+
         for i in range(outputs.shape[0]):
+            if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten.shape():
+                binary = False 
+                loss_factor=5
+            
+            else: 
+                binary = True
+
             if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
-                loss = 10*loss_fn(outputs, batch_labels)
-                break
+                # loss = 10*loss_fn(outputs, batch_labels)
+                # break
+                dangling_endpoints = True
+                loss_factor*=2
             else:
-                loss = loss_fn(outputs, batch_labels)
+                dangling_endpoints = False
+           
+            if binary == False or dangling_endpoints == True:
+                break
+           
+        loss = loss_fn(outputs, batch_labels)*loss_factor
 
         return loss #, outputs
                 
