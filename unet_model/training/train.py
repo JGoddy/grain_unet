@@ -133,7 +133,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
 
 
         # if binary and ... 
-        if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+        if are_there_dangling_endpoints((outputs[i,0]<0.5).float().detach().cpu()):
             loss = 10*loss_fn(outputs, batch_labels)
             break
            # dangling_endpoints = True
@@ -176,6 +176,8 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
 
         #loss_factor = 1
 
+        #outputs = (outputs > 0.5).float() 
+
         for i in range(outputs.shape[0]):
             # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
             #     binary = False 
@@ -184,7 +186,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
             # else: 
             #     binary = True
 
-            if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+            if are_there_dangling_endpoints((outputs[i,0]<0.5).float().detach().cpu()):
                 loss = 10*loss_fn(outputs, batch_labels)
                 break
                 # dangling_endpoints = True
