@@ -100,7 +100,8 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     # binarization_loss_factor = 1 
     # dangling_endpoints_loss_factor=1
 
-    outputs[outputs !=0] = 1
+    #outputs[outputs !=0] = 1
+    outputs[outputs !=1] = 0
 
     #loss_factor = 1
     for i in range(outputs.shape[0]):
@@ -167,7 +168,8 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
         
         #NOTE: see note in training_step
 
-        outputs[outputs !=0] = 1 
+        #outputs[outputs !=0] = 1 
+        outputs[outputs != 0] = 1
 
         # binarization_loss_factor = 1 
         # dangling_endpoints_loss_factor=1
