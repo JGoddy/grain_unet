@@ -189,7 +189,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
                 # loss_factor*=2
             else:
                 if i == len(outputs.shape[0]-1):
-                loss = loss_fn(outputs,batch_labels)
+                    loss = loss_fn(outputs,batch_labels)
                 #dangling_endpoints = False
            
         #     if binary == False or dangling_endpoints == True:
