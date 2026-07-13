@@ -12,6 +12,7 @@ from utility.settings import *
 from utility.plotting import *
 import datetime
 init_training()
+import matplotlib.pyplot as plt
 
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
 
@@ -104,6 +105,8 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #outputs[outputs !=1] = 0
 
     #loss_factor = 1
+    binarized_outputs = (outputs > 0.5).float().detach().cpu() 
+   # print("starting loop ...")
     for i in range(outputs.shape[0]):
          
         # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
@@ -119,10 +122,10 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten().shape():
         #         loss = 10*loss_fn(outputs,batch_labels)
         #         break     
-        # print("*"*20)
-        # print("interation:", i)
-        # print("maximum outputs value:" ,torch.max(outputs[i,0]))
-        # print("minimum outputs value:", torch.min(outputs[i,0]))
+        print("*"*20)
+        print("interation:", i)
+        print("maximum outputs value:" ,torch.max(outputs[i,0]))
+        print("minimum outputs value:", torch.min(outputs[i,0]))
 
         # print("maximum labels value:", torch.max(batch_labels[i,0]))
         # print("minimum labels value:", torch.min(batch_labels[i,0]))
@@ -133,16 +136,27 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
 
 
         # if binary and ... 
-        if are_there_dangling_endpoints((outputs[i,0]<0.5).float().detach().cpu()):
+        # print("*"*20)
+        # print("iteration:",i)
+        # print("max output:",torch.max(outputs[i,0]))
+        # print("min output:",torch.min(outputs[i,0]))
+        # print("max binarized output:",torch.max(binarized_outputs[i,0]))
+        # print("min binarized output:",torch.min(binarized_outputs[i,0]))
+        # print("this iteration loss function:", loss_fn(outputs[i,0], batch_labels[i,0]))
+        # print("loss function:", loss_fn(outputs,batch_labels))
+        if are_there_dangling_endpoints(binarized_outputs[i,0]):
+           # print("There are dangling endpoints")
             loss = 10*loss_fn(outputs, batch_labels)
             break
            # dangling_endpoints = True
            # loss_factor*=2
         else:
+           # print("There are not dangling endpoints")
             if i == outputs.shape[0]-1:
+            #    print("final iteration of batch")
                 loss = loss_fn(outputs,batch_labels)
             #dangling_endpoints = False
-
+       # print("*"*20)
         # if binary == False or dangling_endpoints == True:
         #     break
 
@@ -150,7 +164,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         #     loss = loss_fn(outputs, batch_labels)
 
     #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
-
+  #  print("ended loop")
     loss.backward()
     optimizer.step() 
     return loss  #, outputs
@@ -176,7 +190,9 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
 
         #loss_factor = 1
 
-        #outputs = (outputs > 0.5).float() 
+        #outputs = (outputs > 0.5).float()
+
+        binarized_outputs = (outputs > 0.5).float().detach().cpu() 
 
         for i in range(outputs.shape[0]):
             # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
@@ -186,7 +202,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
             # else: 
             #     binary = True
 
-            if are_there_dangling_endpoints((outputs[i,0]<0.5).float().detach().cpu()):
+            if are_there_dangling_endpoints(binarized_outputs[i,0]):
                 loss = 10*loss_fn(outputs, batch_labels)
                 break
                 # dangling_endpoints = True

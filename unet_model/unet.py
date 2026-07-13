@@ -149,8 +149,6 @@ class UNet(nn.Module):
             # model = Model(inputs = inputs, outputs = conv10)
         out = (self.final_conv(x))
 
-        out[out!=0.0] = 1.0
-
         return out
 
 # Function to load model
