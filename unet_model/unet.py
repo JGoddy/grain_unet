@@ -14,6 +14,9 @@ import torchvision.transforms.functional
 from torch import nn
 from pathlib import Path
 from utility.settings import DEVICE_COMPUTE_PLATFORM, LEARNING_RATE
+import os
+import random
+import numpy as np
 
 #3x3 Convolution Layers
 #"Each step in the contraction path and expansive path have two convolutional layers followed by ReLU activations."
@@ -145,6 +148,9 @@ class UNet(nn.Module):
             #conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv9)
             # model = Model(inputs = inputs, outputs = conv10)
         out = (self.final_conv(x))
+
+        out[out!=0.0] = 1.0
+
         return out
 
 # Function to load model
@@ -168,6 +174,13 @@ def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:i
                 
         model.to(device)
         model.eval()  # Set the model to evaluation mode
+
+        seed = 42
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
         return model
     
 def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1, device='cpu', learning_rate=0.001)->None:
@@ -178,6 +191,12 @@ def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1,
         unet_model = load_model_weights(pretrained_weights, device)
     else:
         unet_model = UNet(out_channels=num_class)
+
+    seed = 42
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)    
 
     print(f"Compute platform is: {device}")
         
