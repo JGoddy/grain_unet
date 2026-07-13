@@ -27,7 +27,9 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     print("input_tensor", input_tensor.shape)
     # Perform inference and apply sigmoid to get probabilities
     with torch.no_grad():
-    
+        Test whether the output of the model is good enough
+        I think I have to replace the sigmoid with converting all nonzero values to 1
+        But test this 
         output = model(input_tensor)
         output = torch.sigmoid(output)
         output_np = output.squeeze().cpu().numpy()  # Remove batch dimension and move to CPU as a numpy array

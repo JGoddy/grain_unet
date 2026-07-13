@@ -99,17 +99,20 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
      
     # binarization_loss_factor = 1 
     # dangling_endpoints_loss_factor=1
-    loss_factor = 1
+
+    outputs[outputs !=0] = 1
+
+    #loss_factor = 1
     for i in range(outputs.shape[0]):
          
-        if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
-            # loss = 10*loss_fn(outputs,batch_labels)
-            # break
-            binary = False 
-            loss_factor=5
+        # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
+        #     # loss = 10*loss_fn(outputs,batch_labels)
+        #     # break
+        #     binary = False 
+        #     loss_factor=5
             
-        else: 
-            binary = True
+        # else: 
+        #     binary = True
 
         # elif np.max(outputs[i,0]) <= 1.0: 
         #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten().shape():
@@ -130,20 +133,22 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
 
         # if binary and ... 
         if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
-            # loss = 10*loss_fn(outputs, batch_labels)
-            # #break
-            dangling_endpoints = True
-            loss_factor*=2
-        else:
-            dangling_endpoints = False
-
-        if binary == False or dangling_endpoints == True:
+            loss = 10*loss_fn(outputs, batch_labels)
             break
+           # dangling_endpoints = True
+           # loss_factor*=2
+        else:
+            if i == len(outputs.shape[0]-1):
+                loss = loss_fn(outputs,batch_labels)
+            #dangling_endpoints = False
+
+        # if binary == False or dangling_endpoints == True:
+        #     break
 
         # else:
         #     loss = loss_fn(outputs, batch_labels)
 
-    loss = loss_fn(outputs, batch_labels)*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
+    #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
 
     loss.backward()
     optimizer.step() 
@@ -162,31 +167,35 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
         
         #NOTE: see note in training_step
 
+        outputs[outputs !=0] = 1 
+
         # binarization_loss_factor = 1 
         # dangling_endpoints_loss_factor=1
 
-        loss_factor = 1
+        #loss_factor = 1
 
         for i in range(outputs.shape[0]):
-            if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
-                binary = False 
-                loss_factor=5
+            # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
+            #     binary = False 
+            #     loss_factor=5
             
-            else: 
-                binary = True
+            # else: 
+            #     binary = True
 
             if are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
-                # loss = 10*loss_fn(outputs, batch_labels)
-                # break
-                dangling_endpoints = True
-                loss_factor*=2
-            else:
-                dangling_endpoints = False
-           
-            if binary == False or dangling_endpoints == True:
+                loss = 10*loss_fn(outputs, batch_labels)
                 break
+                # dangling_endpoints = True
+                # loss_factor*=2
+            else:
+                if i == len(outputs.shape[0]-1):
+                loss = loss_fn(outputs,batch_labels)
+                #dangling_endpoints = False
            
-        loss = loss_fn(outputs, batch_labels)*loss_factor
+        #     if binary == False or dangling_endpoints == True:
+        #         break
+           
+        # loss = loss_fn(outputs, batch_labels)*loss_factor
 
         return loss #, outputs
                 
