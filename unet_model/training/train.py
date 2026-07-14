@@ -122,10 +122,10 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         #     if np.shape(np.where(outputs[i,0]==0.0))[1]+np.shape(np.where(outputs[i,0]==1.0))[1] < outputs[i,0].flatten().shape():
         #         loss = 10*loss_fn(outputs,batch_labels)
         #         break     
-        print("*"*20)
-        print("interation:", i)
-        print("maximum outputs value:" ,torch.max(outputs[i,0]))
-        print("minimum outputs value:", torch.min(outputs[i,0]))
+        # print("*"*20)
+        # print("interation:", i)
+        # print("maximum outputs value:" ,torch.max(outputs[i,0]))
+        # print("minimum outputs value:", torch.min(outputs[i,0]))
 
         # print("maximum labels value:", torch.max(batch_labels[i,0]))
         # print("minimum labels value:", torch.min(batch_labels[i,0]))
@@ -234,40 +234,40 @@ def are_there_dangling_endpoints(image):
     Checks if there are any dangling endpoints in the image.
     """
     for (row,col), val in np.ndenumerate(image): 
-        if val==0 and row>0 and col>0 and row<len(image)-1 and col<len(image)-1: 
+        if val<=0.5 and row>0 and col>0 and row<len(image)-1 and col<len(image)-1: 
 
-            num_neighbors = sum((image[row+1,col]==0, image[row,col+1]==0,  
-                    image[row-1,col]==0, image[row,col-1]==0, 
-                    image[row+1,col+1]==0, image[row-1,col-1]==0, 
-                    image[row+1,col-1]==0, image[row-1,col+1]==0))
+            num_neighbors = sum((image[row+1,col]<=0.5, image[row,col+1]<=0.5,  
+                    image[row-1,col]<=0.5, image[row,col-1]<=0.5, 
+                    image[row+1,col+1]<=0.5, image[row-1,col-1]<=0.5, 
+                    image[row+1,col-1]<=0.5, image[row-1,col+1]<=0.5))
 
             if num_neighbors == 1:
                 return True
           
             elif num_neighbors == 2:
                
-                if ((image[row-1,col-1]==0 and image[row-1,col]==0) or
-                    (image[row-1,col-1]==0 and image[row,col-1]==0) or 
+                if ((image[row-1,col-1]<=0.5 and image[row-1,col]<=0.5) or
+                    (image[row-1,col-1]<=0.5 and image[row,col-1]<=0.5) or 
 
-                    (image[row-1,col+1]==0 and image[row-1,col]==0) or
-                    (image[row-1,col+1]==0 and image[row,col+1]==0) or
+                    (image[row-1,col+1]<=0.5 and image[row-1,col]<=0.5) or
+                    (image[row-1,col+1]<=0.5 and image[row,col+1]<=0.5) or
 
-                    (image[row+1,col-1]==0 and image[row+1,col]==0) or
-                    (image[row+1,col-1]==0 and image[row,col-1]==0) or
+                    (image[row+1,col-1]<=0.5 and image[row+1,col]<=0.5) or
+                    (image[row+1,col-1]==0 and image[row,col-1]<=0.5) or
 
-                    (image[row+1,col+1]==0 and image[row+1,col]==0) or
-                    (image[row+1,col+1]==0 and image[row,col+1]==0)):
+                    (image[row+1,col+1]<=0.5 and image[row+1,col]<=0.5) or
+                    (image[row+1,col+1]<=0.5 and image[row,col+1]<=0.5)):
 
                         return True
                    
             elif num_neighbors == 3:
-               if ((image[row-1,col-1]==0 and image[row-1,col]==0 and image[row,col-1]==0) or
+               if ((image[row-1,col-1]<=0.5 and image[row-1,col]<=0.5 and image[row,col-1]<=0.5) or
                 
-                (image[row-1,col+1]==0 and image[row-1,col]==0 and image[row,col+1]==0) or
+                (image[row-1,col+1]<=0.5 and image[row-1,col]<=0.5 and image[row,col+1]<=0.5) or
 
-                (image[row+1,col-1]==0 and image[row+1,col]==0 and image[row,col-1]==0) or
+                (image[row+1,col-1]<=0.5 and image[row+1,col]<=0.5 and image[row,col-1]<=0.5) or
 
-                (image[row+1,col+1]==0 and image[row+1,col]==0 and image[row,col+1]==0)):
+                (image[row+1,col+1]<=0.5 and image[row+1,col]<=0.5 and image[row,col+1]<=0.5)):
 
                         return True
            
