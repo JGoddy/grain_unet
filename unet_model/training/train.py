@@ -7,6 +7,7 @@ __author__ = "Matthew Patrick, Lauren Grae, Rosnel Leyva-Cortes"
 
 import tqdm
 import torch 
+import torch.nn.functional as F
 import numpy as np
 from utility.settings import *
 from utility.plotting import *
@@ -145,7 +146,10 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         # print("this iteration loss function:", loss_fn(outputs[i,0], batch_labels[i,0]))
         # print("loss function:", loss_fn(outputs,batch_labels))
         #print("starting dangling endpoint check")
-        if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu() ):
+        #if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu() ):
+        if are_there_dangling_endpoints_test(outputs[i,0]):
+
+        
          #   print("There are dangling endpoints")
             loss = 10*loss_fn(outputs, batch_labels)
             break
@@ -203,7 +207,8 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
             # else: 
             #     binary = True
 
-            if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+            #if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
+            if are_there_dangling_endpoints_test(outputs[i,0]):
                 loss = 10*loss_fn(outputs, batch_labels)
                 break
                 # dangling_endpoints = True
@@ -327,5 +332,101 @@ def num_dangling_endpoints(image):
     return len(image_endpoints)
 
 
+# Create this once (outside the function)
+_NEIGHBOR_KERNEL = torch.tensor(
+    [[1, 1, 1],
+     [1, 0, 1],
+     [1, 1, 1]],
+    dtype=torch.float32
+)
+
+_KERNEL_CACHE = {}
+
+def get_kernel(device):
+    if device not in _KERNEL_CACHE:
+        _KERNEL_CACHE[device] = _NEIGHBOR_KERNEL.to(device)
+    return _KERNEL_CACHE[device]
+
+def are_there_dangling_endpoints_test(tensor,threshold=0.5):
+    """
+    Detect dangling endpoints in a binary segmentation.
+
+    Parameters
+    ----------
+    image : (H,W) torch.Tensor
+        Tensor on either CPU or GPU.
+        Pixels <= threshold are treated as boundary pixels.
+
+    Returns
+    -------
+    bool
+    """
 
 
+    mask = tensor <= threshold
+
+    # Count 8-connected neighbors
+    kernel = _NEIGHBOR_KERNEL.to(tensor.device)
+
+    kernel = get_kernel(tensor.device)
+
+    neighbor_count = F.conv2d(
+        mask.float()[None, None],
+        kernel[None, None],
+        padding=1
+    )[0, 0]
+
+    # Ignore image border (same as original implementation)
+    C = mask[1:-1, 1:-1]
+
+    N  = mask[:-2, 1:-1]
+    NE = mask[:-2, 2:]
+    E  = mask[1:-1, 2:]
+    SE = mask[2:, 2:]
+    S  = mask[2:, 1:-1]
+    SW = mask[2:, :-2]
+    W  = mask[1:-1, :-2]
+    NW = mask[:-2, :-2]
+
+    nc = neighbor_count[1:-1, 1:-1]
+
+    #
+    # One-neighbor endpoint
+    #
+    dangling1 = C & (nc == 1)
+
+    #
+    # Two-neighbor endpoint patterns
+    #
+    northwest_tip = (NW & N) | (NW & W)
+    northeast_tip = (NE & N) | (NE & E)
+    southwest_tip = (SW & S) | (SW & W)
+    southeast_tip = (SE & S) | (SE & E)
+
+    cond2 = (
+        northwest_tip |
+        northeast_tip |
+        southwest_tip |
+        southeast_tip
+    )
+
+    dangling2 = C & (nc == 2) & cond2
+
+    #
+    # Three-neighbor endpoint patterns
+    #
+    north_tip = N & NW & NE
+    east_tip  = E & NE & SE
+    south_tip = S & SW & SE
+    west_tip  = W & NW & SW
+
+    cond3 = (
+        north_tip |
+        east_tip |
+        south_tip |
+        west_tip
+    )
+
+    dangling3 = C & (nc == 3) & cond3
+
+    return torch.any(dangling1 | dangling2 | dangling3)
