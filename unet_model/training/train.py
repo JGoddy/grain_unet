@@ -105,7 +105,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #outputs[outputs !=1] = 0
 
     #loss_factor = 1
-    binarized_outputs = (outputs > 0.5).float().detach().cpu() 
+   # binarized_outputs = (outputs > 0.5).float().detach().cpu() 
    # print("starting loop ...")
     for i in range(outputs.shape[0]):
          
@@ -138,22 +138,23 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         # if binary and ... 
         # print("*"*20)
         # print("iteration:",i)
-        # print("max output:",torch.max(outputs[i,0]))
+        # # print("max output:",torch.max(outputs[i,0]))
         # print("min output:",torch.min(outputs[i,0]))
         # print("max binarized output:",torch.max(binarized_outputs[i,0]))
         # print("min binarized output:",torch.min(binarized_outputs[i,0]))
         # print("this iteration loss function:", loss_fn(outputs[i,0], batch_labels[i,0]))
         # print("loss function:", loss_fn(outputs,batch_labels))
-        if are_there_dangling_endpoints(binarized_outputs[i,0]):
-           # print("There are dangling endpoints")
+        #print("starting dangling endpoint check")
+        if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu() ):
+         #   print("There are dangling endpoints")
             loss = 10*loss_fn(outputs, batch_labels)
             break
            # dangling_endpoints = True
            # loss_factor*=2
         else:
-           # print("There are not dangling endpoints")
+          #  print("There are not dangling endpoints")
             if i == outputs.shape[0]-1:
-            #    print("final iteration of batch")
+           #     print("final iteration of batch")
                 loss = loss_fn(outputs,batch_labels)
             #dangling_endpoints = False
        # print("*"*20)
@@ -192,7 +193,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
 
         #outputs = (outputs > 0.5).float()
 
-        binarized_outputs = (outputs > 0.5).float().detach().cpu() 
+        #binarized_outputs = (outputs > 0.5).float().detach().cpu() 
 
         for i in range(outputs.shape[0]):
             # if np.shape(np.where(outputs[i,0].detach().cpu()==0.0))[1]+np.shape(np.where(outputs[i,0].detach().cpu()==1.0))[1] < outputs[i,0].flatten().shape[0]:
@@ -202,7 +203,7 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
             # else: 
             #     binary = True
 
-            if are_there_dangling_endpoints(binarized_outputs[i,0]):
+            if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu()):
                 loss = 10*loss_fn(outputs, batch_labels)
                 break
                 # dangling_endpoints = True
