@@ -147,6 +147,36 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         # print("loss function:", loss_fn(outputs,batch_labels))
         #print("starting dangling endpoint check")
         #if torch.max(outputs[i,0]) > 0.8 and are_there_dangling_endpoints(outputs[i,0].detach().cpu() ):
+
+
+        # if torch.min(outputs[i,0])<0.9:
+        #     threshold = 0.95
+        #elif torch.min(outputs[i,0])<0.999
+        #   threshold = 0.95
+        #else:
+        #   threshold=1.0
+
+        ### START HERE ###
+        # if threshold == 0.5: 
+            # if torch.max(outputs[i,0]) < 0.99 and torch.min(outputs[i,0]) <= 0.5: 
+            #   threshold = 0.5
+            # elif torch.max(outputs[i,0]) < 0.99 and torch.min(outputs[i,0]) < 0.8: 
+            #   threshold = 0.8
+            # elif torch.where(outputs[i,0]==0.0))[0].shape[0]+torch.where(outputs[i,0]==1.0))[0].shape[0] == outputs[i,0].flatten().shape[0]:
+            #   threshold = 1.0 #although in this case, any threshold >0 is the same, so maybe this is unnecessary? 
+            # elif torch.max(outputs[i,0]) > 0.9999 and torch.min(outputs[i,0]) < 0.5:
+            #   threshold = 0.99
+            # elif torch.max(outputs[i,0]) > 0.999 and torch.min(outputs[i,0]) < 0.6: 
+
+            # for epoch 10, the threshold should be 0.75 
+            # ZOOM IN ON THAT AREA AND TEST THIS 
+            # ANY WHY IT IS TRUE FOR THRESHOLD = 0.85 BUT FALSE FOR 0.8
+        # 
+
+
+       
+
+
         if are_there_dangling_endpoints_test(outputs[i,0]):
 
         
@@ -347,7 +377,7 @@ def get_kernel(device):
         _KERNEL_CACHE[device] = _NEIGHBOR_KERNEL.to(device)
     return _KERNEL_CACHE[device]
 
-def are_there_dangling_endpoints_test(tensor,threshold=0.5):
+def are_there_dangling_endpoints_test(tensor,threshold=0.95):
     """
     Detect dangling endpoints in a binary segmentation.
 
@@ -415,16 +445,16 @@ def are_there_dangling_endpoints_test(tensor,threshold=0.5):
     #
     # Three-neighbor endpoint patterns
     #
-    north_tip = N & NW & NE
-    east_tip  = E & NE & SE
-    south_tip = S & SW & SE
-    west_tip  = W & NW & SW
+    northeast_corner = N & NE & E #N & NW & NE
+    northwest_corner = N & NW & W  #E & NE & SE
+    southeast_corner = S & SE & E #S & SW & SE
+    southwest_corner  = S & SW & W #W & NW & SW
 
     cond3 = (
-        north_tip |
-        east_tip |
-        south_tip |
-        west_tip
+        northeast_corner |
+        northwest_corner |
+        southeast_corner |
+        southwest_corner
     )
 
     dangling3 = C & (nc == 3) & cond3
