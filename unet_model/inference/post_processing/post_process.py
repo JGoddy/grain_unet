@@ -307,6 +307,7 @@ def save_and_post_process(image,img_compiled, out_folder, integration=False,
         print("save_path_comp", save_path_comp)
         fm.save_output(img_compiled, save_path_comp)
     #TODO: make ths save path a function parameter
+    #TODO: Fix the save path to use the prefix and the epoch name 
     save_path_post = os.path.join(out_folder,f'postprocess_{Path(image).stem}_dangling_endpoints_penalty 200_512.png')
     print("save_path_post", save_path_post)
     #print("inside in_situ_post_process, compile:", compile)
