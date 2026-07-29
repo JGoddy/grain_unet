@@ -102,6 +102,8 @@ def post_process(img_compiled, n_dilations=3, min_grain_area=70, prune_size=50,
 
         # convert pruned_skeleton from black on white to white on black
         #TODO: maybe use skimage.util.invert instead to invert?
+        # invert works if max is 255, the below only works if max is 1
+        # check this because I convert to 255 scale above 
     return [-1.0*(pruned_skeleton-1.0), out_dict]
 
 
