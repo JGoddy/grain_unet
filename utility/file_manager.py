@@ -108,7 +108,7 @@ def save_output(output_np, output_path, convert_png = True):
     
 
 
-    if output_np.max() <= 1.01:
+    if output_np.max() <= 1.0:
         output_np = output_np * 255
     output_image = Image.fromarray(output_np.astype(np.uint8))  # Convert to 8-bit grayscale image
     output_image.save(output_path)
