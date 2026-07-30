@@ -101,6 +101,12 @@ def save_output(output_np, output_path, convert_png = True):
     if convert_png:
         output_path = Path(output_path).with_suffix(".png")
 
+    #TODO: is it necessary to rescale?
+    #TODO: Is Pillow necessary?
+    # can I just save the output numpy array with matplotlib?
+    # plt.savefig(transparency=True) 
+    
+
 
     if output_np.max() <= 1.01:
         output_np = output_np * 255
