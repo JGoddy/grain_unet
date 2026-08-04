@@ -21,3 +21,4 @@ training_data/nouveaux_labels/*.csv
 Wayne_validation_data/
 *.pth
 folder/
+Cu_Ni_Data/
