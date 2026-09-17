@@ -19,10 +19,16 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     print("image:", image if isinstance(image, Path) else image.shape)
     if isinstance(image, torch.Tensor):
         input_tensor = image
+
+    #    input_tensor[input_tensor > 0.95] = 1.0 
+
     else:
         input_tensor = fm.load_image_tensor(image)
         print("input_tensor shape:", input_tensor.shape)
         print("device:", device)
+
+    #    input_tensor[input_tensor > 0.95] = 1.0 
+
         input_tensor = image_transform(input_tensor).unsqueeze(0).to(device) #* 255.0  # Add batch dimension and move to deviceto(device) 
     print("input_tensor", input_tensor.shape)
     # Perform inference and apply sigmoid to get probabilities
