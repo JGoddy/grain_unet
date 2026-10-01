@@ -153,6 +153,17 @@ def fillGaps(image):
                         image[row,col-1]=0
 
 
+## Step 2: createSegments: linking continuous edgels to create pixel chains 
+# NOTE: Skipping this step because I don't think it is necessary for our purpose.
+# We want to identify the boundaries and triple junctions but can do that separately
+# and can just output an image. Also, I don't like the result in Fig. 5. In particular,
+# I think point (9,10) is important. This method does not seem very robust.        
 
+## Step 3. joinSegments: Extending nearby edge segments 
+# Skip this for the same reason as for step 3. 
+#TODO: remove dangling endpoints at the end. 
 
-        
+## Step 4. thinSegments: Thinning down and cleaning up edge segments
+
+# See Matthew's postprocessing code. Probably the skeletonizing etc. can be used instead. 
+
