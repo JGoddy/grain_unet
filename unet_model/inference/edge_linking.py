@@ -167,3 +167,90 @@ def fillGaps(image):
 
 # See Matthew's postprocessing code. Probably the skeletonizing etc. can be used instead. 
 
+## close larger gaps
+
+#step 1 identify endpoints
+
+
+def closeGaps(image): 
+    """
+    This function closes large gaps between edges in an image
+    """
+
+    num_boundary_pixels_to_trace = 10
+
+    ## Step 1: Identify the endpoints 
+    for (row,col), val in np.ndenumerate(image):
+
+            
+            #first, only select the pixels constituting the grain boundary (black and not on the edge)  
+            if val == 0 and row > 0 and col > 0 and row < len(image)-num_boundary_pixels_to_trace and col < len(image)-num_boundary_pixels_to_trace:
+
+                #select grain boundary pixels with only one neighbor 
+                #these are the edgels
+                #TODO: is there a better way to determine this?
+
+                num_neighbors = sum((image[row+1,col]<=0.5, image[row,col+1]<=0.5,  
+                        image[row-1,col]<=0.5, image[row,col-1]<=0.5, 
+                        image[row+1,col+1]<=0.5, image[row-1,col-1]<=0.5, 
+                        image[row+1,col-1]<=0.5, image[row-1,col+1]<=0.5))
+
+                if num_neighbors == 1:
+                    #list to hold the direction of the boundary with respect to the endpoint
+                    boundary_direction = []
+                    
+
+                #step 2: for each endpoint find nearest non-connected neighbor
+                #TODO: Find an easy way someone has one this
+
+
+                # #I think I need to go over all the cases explicitly again
+                # as a direction to start looking? 
+
+
+
+
+                #   NOTE: The code below is for identifying the slope of the endpoint
+                # but I don't think that's necessary 
+                #     # configuration 1: neighboring edge pixel is up-left: (row-1,col-1)
+                #     # first identify this configuration
+                #     if image[row-1,col-1]==0:
+                #         #first, add this to the boundary_direction 
+                #         boundary_direction.append("up_left")
+                #         #trace the boundary
+                #         #for range: start at 2, since already did 1
+                #         for pixel_num in range(2,num_boundary_pixels_to_trace):
+                #             #make sure away from boundary 
+                #             if row-pixel_num > 0 and row+pixel_num < len(image) and col-pixel_num > 0 and col+pixel_num < len(image):
+                #                 #first check whether the boundary continues up-left
+                #                 if image[row-pixel_num,col-pixel_num]==0:
+                #                     boundary_direction.append("up-left")
+                #                 #if not, check whether boundary continues up 
+                #                 elif image[row-pixel_num,col]==0
+                #                     boundary_direction.append("up")
+                #                 #if not, check whether boundary continues left
+                #                 elif image[row,col-pixel_num]==0:
+                #                     boundary_direction.append("left")
+                                
+                #                 #should I check other directions?
+                #                 #how about no for now
+                                
+
+                    
+
+
+
+                # # I should incorporate direction of boundary line in direction
+                # # to search for neighbor, but IDK the easiest way to do that 
+                # # 
+                # # use the Akinlar and Chrom method for identifying the path 
+                # # 
+                
+
+
+
+                #step 3 fit spline between them
+
+                #if "up" in boundary_direction and "up-left" in boundary_direction:
+                # ... 
+                # see scikit-image active contours 
