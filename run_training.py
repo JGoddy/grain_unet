@@ -93,8 +93,8 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
                                                                                 training_split = training_split, batch_size=batch_size,
                                                                                 num_workers=num_workers, transform_generator=image_transforms)
     user_interface.startTrainingLogoPrint()
-    print(f"Training the model using {loss_fn} and dangling endpoints penalty")
-    #print(f"Training the model using {loss_fn}")
+    #print(f"Training the model using {loss_fn} and dangling endpoints penalty")
+    print(f"Training the model using {loss_fn}")
 
     train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer, start_epoch = start_epoch,
                 num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
