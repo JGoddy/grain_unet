@@ -89,6 +89,8 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     # Train the model 
     #transforms = training_transforms
     print(f'image path: { image_path}')
+    print(f'weights save folder path: {weights_save_folder_path}')
+    
     train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
                                                                                 training_split = training_split, batch_size=batch_size,
                                                                                 num_workers=num_workers, transform_generator=image_transforms)

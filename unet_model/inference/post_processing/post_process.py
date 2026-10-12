@@ -303,7 +303,7 @@ def save_and_post_process(image,img_compiled, out_folder, integration=False,
         conservative_thresh=160, liberal_thresh=200,
         n_dilations=3, min_grain_area=70, prune_size=50,
         out_dict=False):
-    
+    print("image path to postprocess:", image)
     if not integration == 1:
         save_path_comp = os.path.join(out_folder,f'compiled_{Path(image).stem}_95_512.png')
         print("save_path_comp", save_path_comp)
