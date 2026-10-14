@@ -178,6 +178,12 @@ def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:i
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)    
+
+        print(f"The seed for reproducibility is set to: {seed}")
 
         return model
     
@@ -194,8 +200,13 @@ def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1,
     os.environ['PYTHONHASHSEED'] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)    
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)    
 
+    print(f"The seed for reproducibility is set to: {seed}")
     print(f"Compute platform is: {device}")
         
     unet_model.to(device)

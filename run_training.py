@@ -68,7 +68,6 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
-
     #NOTE: assuming weights file name contains epoch_XXX
     if pretrained_weights != None:
         if weights_save_folder_path == None:
@@ -90,7 +89,7 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     #transforms = training_transforms
     print(f'image path: { image_path}')
     print(f'weights save folder path: {weights_save_folder_path}')
-    
+
     train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
                                                                                 training_split = training_split, batch_size=batch_size,
                                                                                 num_workers=num_workers, transform_generator=image_transforms)
@@ -105,4 +104,4 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     print("Training complete.")
 
 # uncomment out to run from the command line
-#train()
+#train()            val_losses.append(val_loss.item())
