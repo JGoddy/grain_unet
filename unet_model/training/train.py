@@ -47,29 +47,35 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch}.pth")
 
         #validation step
-    tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch}/{num_epochs} - Validation")
+        #NOTE: 
+        # See the comment in training_datasets.py about why I don't think it is necessary to split the dataset into training and validation.
+        # also see the comment in run_training.py about how I am leaving the validation kwargs in the functions for now out of laziness
+        # but they are not being used 
 
-    with torch.no_grad():
-        for images, labels, names in tqdm_val_dataloader:
-            #val_loss, validation_outputs = validation_step(images, labels, model, loss_fn, device)
-            val_loss = validation_step(images, labels, model, loss_fn, device)
+    # tqdm_val_dataloader = tqdm.tqdm(val_dataloader, desc=f"Epoch {epoch}/{num_epochs} - Validation")
 
-            val_losses.append(val_loss.item())
+    # with torch.no_grad():
+    #     for images, labels, names in tqdm_val_dataloader:
+    #         #val_loss, validation_outputs = validation_step(images, labels, model, loss_fn, device)
+    #         val_loss = validation_step(images, labels, model, loss_fn, device)
+
+    #         val_losses.append(val_loss.item())
     
     # Logging the metrics
     train_loss = sum(train_losses) / len(train_losses)
-    val_loss = sum(val_losses) / len(val_losses)
+    #val_loss = sum(val_losses) / len(val_losses)
 
     train_losses.append(train_loss)
-    val_losses.append(val_loss)
+    #val_losses.append(val_loss)
    
     print(f"Epoch {epoch+1}/{num_epochs}:")
     print(f"Training Loss: {train_loss}")
-    print(f"Validation Loss: {val_loss}")
+    #print(f"Validation Loss: {val_loss}")
 
     
 
-    return train_loss, val_loss
+    #return train_loss, val_loss
+    return train_loss
 
 
 def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device='cpu'):

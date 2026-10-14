@@ -25,7 +25,7 @@ import datetime
 import os
 
 train_losses = []
-val_losses = []
+val_losses = None #[]
 
 # def train_loop(model:unet.UNet=UNET_MODEL, loss_fn=LOSS_FN, 
 #                optimizer=torch.optim.Adam, device=DEVICE_COMPUTE_PLATFORM, 
@@ -47,11 +47,16 @@ def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss
     model, optimizer = unet.initialize_model_training(pretrained_weights=pretrained_weights, num_class = num_class,
                                                       device=device, learning_rate=learning_rate)
 
-
+    ###
+    #NOTE: see the comment in training_datasets.py about why I don't think it is necessary to split the dataset into training and validation.
+    # I am leaving the validation kwargs in for now out of laziness but they are not necessary unless we want to split the dataset into training and validation.
+    ###
     for epoch_ii in range(start_epoch,num_epochs):
-        train_loss, val_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
+        #train_loss, val_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
+        train_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
+
         train_losses.append(train_loss)
-        val_losses.append(val_loss)
+        #val_losses.append(val_loss)
     
 
 # def train(model:unet.UNet=MODEL_PARAMS, image_path=IMAGE_PATH, label_path=LABEL_PATH, 
@@ -90,16 +95,28 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
     print(f'image path: { image_path}')
     print(f'weights save folder path: {weights_save_folder_path}')
 
-    train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
+
+    # train_dataloader, val_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
+    #                                                                             training_split = training_split, batch_size=batch_size,
+    #                                                                             num_workers=num_workers, transform_generator=image_transforms)
+
+    ##NOTE: See the comment in training_datasets.py about why I don't think it is necessary to split the dataset into training and validation.
+    ## I'm leaving the kwarg 'training_split' in the function for now out of laziness, but it is not necessary unless we want to split the dataset into training and validation.
+    train_dataloader = training_datasets.get_train_data_loaders(image_path=image_path, label_path=label_path, 
                                                                                 training_split = training_split, batch_size=batch_size,
                                                                                 num_workers=num_workers, transform_generator=image_transforms)
     user_interface.startTrainingLogoPrint()
     #print(f"Training the model using {loss_fn} and dangling endpoints penalty")
     print(f"Training the model using {loss_fn}")
 
+    # train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer, start_epoch = start_epoch,
+    #             num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
+    #             learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=val_dataloader, device=device)
+
     train_loop(model=model, pretrained_weights=pretrained_weights, loss_fn=loss_fn, optimizer=optimizer, start_epoch = start_epoch,
-                num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
-                learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=val_dataloader, device=device)
+                    num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
+                    learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=None, device=device)
+    
     plot_loss_points(train_losses, val_losses)
     print("Training complete.")
 

@@ -25,8 +25,9 @@ Function that takes in an array of loss function values and exports a png at the
     #validation figure creation
     plt.figure()
 
+    if loss_point_validation is not None:
      # Plot data points
-    plt.plot(loss_point_validation, marker='o', linestyle='-')
+        plt.plot(loss_point_validation, marker='o', linestyle='-')
     
     # Add title and labels
     plt.title('Loss over Validation Epochs')
@@ -40,7 +41,8 @@ Function that takes in an array of loss function values and exports a png at the
     #[bookmark potential]
     #storing data for external plotting
     filename_training_csv = "training_loss_graph_data.csv"
-    filename_validation_csv = "validtation_loss_graph_data.csv"
+    if loss_point_validation is not None:
+        filename_validation_csv = "validation_loss_graph_data.csv"  
     #filename_interimlosses_csv = "interimlosses_for_Rickman.csv"
 
     df_training_loss_point = pd.DataFrame(loss_points_training, columns=['Epochs'])
@@ -50,8 +52,9 @@ Function that takes in an array of loss function values and exports a png at the
     #df_interimloss_for_Rickman = pd.DataFrame(interimloss_point, columns=['Epochs', 'Interim Loss'])
 
     df_training_loss_point.to_csv(filename_training_csv, index=False)
-    
-    df_validation_loss_point.to_csv(filename_validation_csv,index=False)
+
+    if loss_point_validation is not None:
+        df_validation_loss_point.to_csv(filename_validation_csv,index=False)
 
     #df_interimloss_for_Rickman.to_csv(filename_interimlosses_csv, index=False)
 

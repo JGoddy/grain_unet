@@ -21,23 +21,33 @@ def get_train_data_loaders(image_path:str = 'training_data/nonuveaux_and_nuevo_i
 
     print('images found = ',imageset.__len__())
 
-    # Define the sizes of your training and validation sets
-    train_size = int(float(training_split) * len(imageset))
-    val_size = len(imageset) - train_size
+
+    ### 
+    #NOTE: I don't think it is necessary to split the dataset into training and validation. 
+    # We test the model on a very different dataset than the training dataset, so we will catch 
+    # if it overfits to the training dataset, etc. 
+    # Also, since the training dataset is small, we want to use all of it for training.
+
+
+    ### 
+    # # Define the sizes of your training and validation sets
+    # train_size = int(float(training_split) * len(imageset))
+    # val_size = len(imageset) - train_size
 
     g = torch.Generator()
     g.manual_seed(42)  # Set a seed for reproducibility
 
 
     # Split the dataset
-    train_dataset, val_dataset = random_split(imageset, [train_size, val_size], generator=g)
+  #  train_dataset, val_dataset = random_split(imageset, [train_size, val_size], generator=g)
 
 
   
 
 
     train_dataloader = torch.utils.data.DataLoader(
-        dataset=train_dataset,
+        #dataset=train_dataset,
+        dataset=imageset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
@@ -45,17 +55,17 @@ def get_train_data_loaders(image_path:str = 'training_data/nonuveaux_and_nuevo_i
         generator=g
     )
 
-    val_dataloader = torch.utils.data.DataLoader(
-        dataset=val_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        worker_init_fn=seed_worker,
-        generator=g
-    )
+    # val_dataloader = torch.utils.data.DataLoader(
+    #     dataset=val_dataset,
+    #     batch_size=batch_size,
+    #     shuffle=True,
+    #     num_workers=num_workers,
+    #     worker_init_fn=seed_worker,
+    #     generator=g
+    # )
 
-    return train_dataloader, val_dataloader
-
+    #return train_dataloader, val_dataloader
+    return train_dataloader 
 
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
