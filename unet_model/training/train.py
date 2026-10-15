@@ -68,7 +68,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
     train_losses.append(train_loss)
     #val_losses.append(val_loss)
    
-    print(f"Epoch {epoch+1}/{num_epochs}:")
+    print(f"Epoch {epoch}/{num_epochs}:")
     print(f"Training Loss: {train_loss}")
     #print(f"Validation Loss: {val_loss}")
 
@@ -86,6 +86,11 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     batch_images = batch_images.to(device)
     batch_labels = batch_labels.to(device)
     outputs = model.forward(batch_images)
+
+
+    # print("outputs max:", torch.max(outputs))
+    # print("outputs min:", torch.min(outputs))
+
     # what is the shape of outputs? 
     #num_dangling_endpoints = num_dangling_endpoints(outputs)
     #are_there_dangling_endpoints = are_there_dangling_endpoints(outputs)

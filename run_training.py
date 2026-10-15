@@ -51,7 +51,7 @@ def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss
     #NOTE: see the comment in training_datasets.py about why I don't think it is necessary to split the dataset into training and validation.
     # I am leaving the validation kwargs in for now out of laziness but they are not necessary unless we want to split the dataset into training and validation.
     ###
-    for epoch_ii in range(start_epoch,num_epochs):
+    for epoch_ii in range(start_epoch,num_epochs+1):
         #train_loss, val_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
         train_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
 
