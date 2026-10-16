@@ -18,7 +18,9 @@ import matplotlib.pyplot as plt
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
 
 
-def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch, num_epochs, saving_rate, weights_save_folder_path):
+def epoch(model, train_dataloader, val_dataloader, loss_fn, 
+          optimizer, device, epoch, num_epochs, saving_rate, 
+          redoing_epoch_after_loading_from_pretrained_weights, weights_save_folder_path):
     
     model.train(True) 
     train_losses = []

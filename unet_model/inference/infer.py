@@ -33,7 +33,7 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     print("input_tensor", input_tensor.shape)
     # Perform inference and apply sigmoid to get probabilities
     with torch.no_grad():
-       
+        model.eval()
         output = model(input_tensor)
         output = torch.sigmoid(output)
         output_np = output.squeeze().cpu().numpy()  # Remove batch dimension and move to CPU as a numpy array

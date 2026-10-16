@@ -165,7 +165,7 @@ def load_model_weights(model_path:str|Path|UNet, optimizer: torch.optim.Optimize
         model = UNet(out_channels=num_class).to(device)
         if isinstance(model_path, str|Path):
             try:
-                checkpoint = torch.load(model_path, map_location=device)
+                checkpoint = torch.load(model_path, map_location=device, weights_only=False)
                 model.load_state_dict(checkpoint['model'])
 
                 pretrained_weights_lr = checkpoint['learning_rate']
@@ -188,8 +188,8 @@ def load_model_weights(model_path:str|Path|UNet, optimizer: torch.optim.Optimize
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-       # torch.backends.cudnn.benchmark = False
-       # torch.use_deterministic_algorithms(True)    
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)    
 
         print(f"The seed for reproducibility is set to: {seed}")
 
@@ -206,11 +206,13 @@ def initialize_model_training(pretrained_weights:str|Path|UNet, optimizer = torc
             raise ValueError(f"The learning rate provided ({learning_rate}) does not match the learning rate used in the pretrained weights ({pretrained_weights_lr}). \
                             We are not currently scheduling the learning rate and this is not the way to do so.  \n \
                             Please provide the correct learning rate.")
+        redoing_epoch_after_loading_from_pretrained_weights = True
     else:
         unet_model = UNet(out_channels=num_class).to(device)
         #optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
         optimizer = optimizer(unet_model.parameters(), lr=learning_rate)
         epoch = 0
+        redoing_epoch_after_loading_from_pretrained_weights = False
        # train_losses = []
 
     seed = 42
@@ -220,12 +222,12 @@ def initialize_model_training(pretrained_weights:str|Path|UNet, optimizer = torc
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-   # torch.backends.cudnn.benchmark = False
-   # torch.use_deterministic_algorithms(True)    
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)    
 
     print(f"The seed for reproducibility is set to: {seed}")
     print(f"Compute platform is: {device}")
         
     # unet_model.to(device)
     # optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
-    return unet_model, optimizer, epoch #, train_losses
+    return unet_model, optimizer, epoch, redoing_epoch_after_loading_from_pretrained_weights #, train_losses

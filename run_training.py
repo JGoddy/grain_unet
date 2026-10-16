@@ -44,7 +44,7 @@ def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
     #loss_fn = nn.BCEWithLogitsLoss()
-    model, optimizer, start_epoch, train_losses = unet.initialize_model_training(pretrained_weights=pretrained_weights, optimizer = optimizer,
+    model, optimizer, start_epoch, redoing_epoch_after_loading_from_pretrained_weights = unet.initialize_model_training(pretrained_weights=pretrained_weights, optimizer = optimizer,
                                                                                     num_class = num_class,
                                                                                     device=device, learning_rate=learning_rate)
 
@@ -53,9 +53,15 @@ def train_loop(model=unet, pretrained_weights=None, loss_fn=nn.BCEWithLogitsLoss
     # I am leaving the validation kwargs in for now out of laziness but they are not necessary unless we want to split the dataset into training and validation.
     ###
     for epoch_ii in range(start_epoch,num_epochs+1):
+        # if redoing_epoch_after_loading_from_pretrained_weights and epoch_ii == start_epoch:
+        #     print(f"Redoing epoch {epoch_ii} after loading from pretrained weights.")
+            
+        
+        
+        
         #train_loss, val_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate, weights_save_folder_path)
         train_loss = epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, epoch_ii, num_epochs, saving_rate,
-                            weights_save_folder_path)
+                            redoing_epoch_after_loading_from_pretrained_weights, weights_save_folder_path)
 
         train_losses.append(train_loss)
         #val_losses.append(val_loss)
