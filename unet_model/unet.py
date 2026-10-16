@@ -152,7 +152,7 @@ class UNet(nn.Module):
         return out
 
 # Function to load model
-def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:int=1)->UNet:
+def load_model_weights(model_path:str|Path|UNet, optimizer: torch.optim.Optimizer = torch.optim.Adam, device:str = 'cpu', num_class:int=1)->UNet:
     
     if device == 'cpu':
         raise ValueError("CPU is not supported for training or inference. \n Please use a GPU for training or inference.")
@@ -162,10 +162,18 @@ def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:i
         return model
     
     else:
-        model = UNet(out_channels=num_class)
+        model = UNet(out_channels=num_class).to(device)
         if isinstance(model_path, str|Path):
             try:
-                model.load_state_dict(torch.load(model_path, map_location=device))
+                checkpoint = torch.load(model_path, map_location=device)
+                model.load_state_dict(checkpoint['model'])
+
+                pretrained_weights_lr = checkpoint['learning_rate']
+                #optimizer = torch.optim.Adam(model.parameters(), lr=checkpoint['learning_rate'])
+                optimizer = optimizer(model.parameters(), lr=checkpoint['learning_rate'])
+                optimizer.load_state_dict(checkpoint['optimizer'])
+                epoch = checkpoint['epoch']
+               # train_losses = checkpoint['train_losses']
             except:
                 raise ValueError('Could not load provided state_dict. Model cannot be initialized. Check if the model path is correct.')
 
@@ -185,16 +193,25 @@ def load_model_weights(model_path:str|Path|UNet, device:str = 'cpu', num_class:i
 
         print(f"The seed for reproducibility is set to: {seed}")
 
-        return model
+        return model, optimizer, pretrained_weights_lr, epoch #, train_losses
     
-def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1, device='cpu', learning_rate=0.001)->None:
+def initialize_model_training(pretrained_weights:str|Path|UNet, optimizer = torch.optim.Adam, num_class:int=1, device='cpu', learning_rate=0.001)->None:
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
 
     if pretrained_weights:
-        unet_model = load_model_weights(pretrained_weights, device)
+        #unet_model = load_model_weights(pretrained_weights, device)
+        unet_model, optimizer, pretrained_weights_lr, epoch = load_model_weights(pretrained_weights, optimizer, device)
+        if pretrained_weights_lr != learning_rate:
+            raise ValueError(f"The learning rate provided ({learning_rate}) does not match the learning rate used in the pretrained weights ({pretrained_weights_lr}). \
+                            We are not currently scheduling the learning rate and this is not the way to do so.  \n \
+                            Please provide the correct learning rate.")
     else:
-        unet_model = UNet(out_channels=num_class)
+        unet_model = UNet(out_channels=num_class).to(device)
+        #optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
+        optimizer = optimizer(unet_model.parameters(), lr=learning_rate)
+        epoch = 0
+       # train_losses = []
 
     seed = 42
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -209,6 +226,6 @@ def initialize_model_training(pretrained_weights:str|Path|UNet, num_class:int=1,
     print(f"The seed for reproducibility is set to: {seed}")
     print(f"Compute platform is: {device}")
         
-    unet_model.to(device)
-    optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
-    return unet_model, optimizer
+    # unet_model.to(device)
+    # optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
+    return unet_model, optimizer, epoch #, train_losses

@@ -44,7 +44,24 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn, optimizer, device, e
         # after the first (zeroth) epoch, the model saves 
         #torch.save(model.state_dict(), f'{MODEL_PARAMS.split(".")[0]}_{epoch}_{datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.pth')
 
-        torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch}.pth")
+
+        ## I don't need to save the optimizer state dict
+        ## unless I want to do learning rate schduling, which I am not yet doing. 
+        ## Therefore, I should save the learning rate to make sure I am not 
+        ## accidentally changing it (resuming training with a different learning rate 
+        # than I started with).
+        checkpoint = {
+            'model': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'learning_rate': optimizer.param_groups[0]['lr'],
+            'epoch': epoch,
+            #'train_losses': train_losses
+            }
+
+
+
+        #torch.save(model.state_dict(),f"{weights_save_folder_path}/epoch_{epoch}.pth")
+        torch.save(checkpoint, f"{weights_save_folder_path}/epoch_{epoch}.pth")
 
         #validation step
         #NOTE: 
