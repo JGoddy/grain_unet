@@ -109,7 +109,7 @@ def in_situ_inference(model_path=None, folder='', pattern=None,
 
     ''' This function will take in the test data directory and create inferences for the different fovs of those images'''
     folder = Path(folder)
-    model = unet.load_model_weights(model_path=model_path, device = device)
+    model, _,_,_ = unet.load_model_weights(model_path=model_path, device = device)
     print(f"Loaded model from {model_path}")
     print("Compute platform is: ", device)
     print(f"Looking for images in: {folder}/{pattern} excluding: {exclude}, including: {include}")
