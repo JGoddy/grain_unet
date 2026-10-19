@@ -125,7 +125,9 @@ def train(model:unet, loss_fn:callable=nn.BCEWithLogitsLoss(), optimizer=torch.o
                     num_epochs=num_epochs, num_class = num_class, saving_rate=saving_rate, weights_save_folder_path = weights_save_folder_path,
                     learning_rate=learning_rate, train_dataloader=train_dataloader, val_dataloader=None, device=device)
     
-    plot_loss_points(train_losses, val_losses)
+    plot_loss_points(train_losses, val_losses, 
+                     filename_training=f"Loss_Plots/lossPlotTraining_{datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}.png")
+    
     print("Training complete.")
 
 # uncomment out to run from the command line
