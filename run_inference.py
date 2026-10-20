@@ -30,6 +30,7 @@ import utility.transformation as t
     
 def run_inference(
         model_path = None, #TODO: put a better default here
+        immediate_parent_folder_path = None, #TODO: put a better default here
         prefix = None, #TODO: put a better default here
         mode=None, 
         inference = True, 
@@ -66,7 +67,7 @@ def run_inference(
                     folder = image_folder_path, pattern = inference_pattern, 
                     exclude = inference_exclude, include = inference_include,
                     target_resolution = target_resolution, image_transform = image_transform,
-                    prefix = prefix, device = device) 
+                    immediate_parent_folder_path = immediate_parent_folder_path, prefix = prefix, device = device) 
             if post_process: 
                 in_situ_post_process(in_folder = image_folder_path,
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
@@ -89,16 +90,18 @@ def run_inference(
                     exclude=inference_exclude, include=inference_include, 
                     target_resolution=target_resolution,
                     image_transform=image_transform,
-                    prefix=prefix,device=device)
+                    immediate_parent_folder_path=immediate_parent_folder_path, prefix=prefix, device=device)
             if post_process:
                in_situ_post_process(
                     #in_folder = image_folder_path,
-                    in_folder=f"{image_folder_path}/inferenced/{prefix}",
+                    #in_folder=f"{image_folder_path}/inferenced/{prefix}",
+                    in_folder = f"{image_folder_path}/inferenced/{immediate_parent_folder_path}",
                     folders_pattern = folders_pattern, folders_exclude = folders_exclude, 
                     folders_include = folders_include,
                     postprocess_pattern = postprocess_pattern, postprocess_exclude = postprocess_exclude, 
                     postprocess_include = postprocess_include, 
-                    out_folder = f"{image_folder_path}/post_process/{prefix}", 
+                    #out_folder = f"{image_folder_path}/post_process/{prefix}",
+                    out_folder = f"{image_folder_path}/post_process/{immediate_parent_folder_path}", 
                     integration = integration, invert_double_thresh=invert_double_thresh,
                     conservative_thresh=conservative_thresh, liberal_thresh=liberal_thresh,
                     compile = compile, out_dict= out_dict,
