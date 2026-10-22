@@ -30,13 +30,13 @@ Function that takes in an array of loss function values and exports a png at the
         plt.plot(loss_point_validation, marker='o', linestyle='-')
     
     # Add title and labels
-    plt.title('Loss over Validation Epochs')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss Fn Value (Validation)')
-    
-    # Save the plot as a PNG file
-    plt.savefig(filename_validation)
-    plt.close()  # Close the figure
+        plt.title('Loss over Validation Epochs')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss Fn Value (Validation)')
+
+        # Save the plot as a PNG file
+        plt.savefig(filename_validation)
+        plt.close()  # Close the figure
 
     #[bookmark potential]
     #storing data for external plotting
