@@ -232,10 +232,22 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
         # else:
         #     loss = loss_fn(outputs, batch_labels)
         
-    num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
-    frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
+   # num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
+   # frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
+    
+    sigmoid_outputs = torch.sigmoid(outputs)
+    
+    num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
+    frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
 
-    loss = loss_fn(outputs, batch_labels) / frac_binarized_pixels if frac_binarized_pixels != 0 else loss_fn(outputs, batch_labels) # * outputs.flatten().shape[0] 
+    # if frac_binarized_pixels !=0: 
+    #     pass
+    
+    if frac_sigmoid_binarized_pixels !=0: 
+        pass
+    
+    #loss = 100.0*loss_fn(outputs, batch_labels) if frac_sigmoid_binarized_pixels != 1.0 else loss_fn(outputs, batch_labels)
+    loss = loss_fn(outputs, batch_labels) / frac_sigmoid_binarized_pixels if frac_sigmoid_binarized_pixels != 0 else loss_fn(outputs, batch_labels) * outputs.flatten().shape[0] 
     #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
   #  print("ended loop")
     loss.backward()
