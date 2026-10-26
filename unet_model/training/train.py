@@ -24,7 +24,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn,
     
     model.train(True) 
     train_losses = []
-    val_losses = []
+    #val_losses = []
 
     tqdm_train_dataloader = tqdm.tqdm(train_dataloader, desc=f"Epoch {epoch}/{num_epochs} - Training") 
 
@@ -105,6 +105,10 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     batch_images = batch_images.to(device)
     batch_labels = batch_labels.to(device)
     outputs = model.forward(batch_images)
+    
+    
+    # for i in range(outputs.shape[0]):
+    #     non_binarized_fraction = 
 
 
     # print("outputs max:", torch.max(outputs))
@@ -227,8 +231,12 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
 
         # else:
         #     loss = loss_fn(outputs, batch_labels)
+        
+    num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
+    frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
 
-    loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
+    loss = loss_fn(outputs, batch_labels) / frac_binarized_pixels if frac_binarized_pixels != 0 else loss_fn(outputs, batch_labels) # * outputs.flatten().shape[0] 
+    #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
   #  print("ended loop")
     loss.backward()
     optimizer.step() 
