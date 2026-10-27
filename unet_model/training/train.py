@@ -237,17 +237,29 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     
     sigmoid_outputs = torch.sigmoid(outputs)
     
-    num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
-    frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
+    # num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
+    # frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
 
-    # if frac_binarized_pixels !=0: 
+    # # if frac_binarized_pixels !=0: 
+    # #     pass
+    
+    # if frac_sigmoid_binarized_pixels !=0: 
     #     pass
     
-    if frac_sigmoid_binarized_pixels !=0: 
-        pass
+    #sigmoid_outputs_thresholded = (sigmoid_outputs > 0.5).float() 
     
+    #straight_through_estimated_outputs = straight_through_estimator(outputs)
+    #lambda is coefficient of regularization term
+    #loss = loss_fn(outputs,batch_labels) + 5.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
+    
+    Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
+    Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
+    
+    loss = loss_fn(outputs, batch_labels) + Gaussian_outputs.mean()
+    
+   # loss = loss_fn(straight_through_estimated_outputs, batch_labels)
     #loss = 100.0*loss_fn(outputs, batch_labels) if frac_sigmoid_binarized_pixels != 1.0 else loss_fn(outputs, batch_labels)
-    loss = loss_fn(outputs, batch_labels) / frac_sigmoid_binarized_pixels if frac_sigmoid_binarized_pixels != 0 else loss_fn(outputs, batch_labels) * outputs.flatten().shape[0] 
+    #loss = loss_fn(outputs, batch_labels) / frac_sigmoid_binarized_pixels if frac_sigmoid_binarized_pixels != 0 else loss_fn(outputs, batch_labels) * outputs.flatten().shape[0] 
     #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
   #  print("ended loop")
     loss.backward()
@@ -316,6 +328,20 @@ def validation_step(batch_images, batch_labels, model, loss_fn, device='cpu'):
 def save_model(model, num_epochs=-1, epoch=-1):
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{epoch}.pth')
     torch.save(model.state_dict(),  f'{MODEL_PARAMS.split(".")[0]}_{num_epochs}.pth')
+
+
+def straight_through_estimator(logits, threshold=0.0):
+    # Hard threshold in the forward pass
+    hard = (logits > threshold).float()
+
+    # Differentiable approximation in the backward pass
+    soft = torch.sigmoid(logits)
+
+    # Forward value = hard
+    # Backward gradient = gradient of soft
+    return hard.detach() - soft.detach() + soft
+
+
 
 
 def are_there_dangling_endpoints(image):
