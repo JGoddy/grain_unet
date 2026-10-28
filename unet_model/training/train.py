@@ -235,7 +235,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
    # num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
    # frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
     
-    sigmoid_outputs = torch.sigmoid(outputs)
+    #sigmoid_outputs = torch.sigmoid(outputs)
     
     # num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
     # frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
@@ -252,15 +252,16 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #lambda is coefficient of regularization term
     #loss = loss_fn(outputs,batch_labels) + 5.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
     
-    Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
-    Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
-    
-    loss = loss_fn(outputs, batch_labels) + Gaussian_outputs.mean()
+    # Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
+    # Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
+   
+         
+  #  loss = loss_fn(outputs, batch_labels) + 1e-3*Gaussian_outputs.mean()
     
    # loss = loss_fn(straight_through_estimated_outputs, batch_labels)
     #loss = 100.0*loss_fn(outputs, batch_labels) if frac_sigmoid_binarized_pixels != 1.0 else loss_fn(outputs, batch_labels)
     #loss = loss_fn(outputs, batch_labels) / frac_sigmoid_binarized_pixels if frac_sigmoid_binarized_pixels != 0 else loss_fn(outputs, batch_labels) * outputs.flatten().shape[0] 
-    #loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
+    loss = loss_fn(outputs, batch_labels) #*loss_factor  #+ num_dangling_endpoints #maybe multiply by a constant?
   #  print("ended loop")
     loss.backward()
     optimizer.step() 
