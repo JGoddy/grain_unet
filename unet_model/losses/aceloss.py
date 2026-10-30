@@ -143,7 +143,11 @@ def ACELoss(y_pred, y_true, u=1, a=1, b=1):
         label = y_true.float()
         c_in = torch.ones_like(y_pred)
         c_out = torch.zeros_like(y_pred)
-        region_in = torch.abs(torch.sum(y_pred * ((label - c_in) ** 2)))
+        
+        #region_in = torch.abs(torch.sum(y_pred * ((label - c_in) ** 2)))
+        region_in = torch.abs(torch.mean(y_pred * ((label - c_in) **2)))
+        
+        
         # region_out = torch.abs(
         #     torch.sum((1 - y_pred) * ((label - c_out) ** 2)))
         region_out = torch.abs(
