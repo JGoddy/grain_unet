@@ -36,18 +36,31 @@ class ACLoss(nn.Module):
         grd_y = self.diff_y(predication)
 
         # length
-        length = torch.sum(
+        # length = torch.sum(
+        #     torch.abs(torch.sqrt(grd_x ** 2 + grd_y ** 2 + 1e-8)))
+        
+        length = torch.mean(
             torch.abs(torch.sqrt(grd_x ** 2 + grd_y ** 2 + 1e-8)))
+        
+        
         length = (length - length.min()) / (length.max() - length.min() + 1e-8)
-        length = torch.sum(length)
+        
+        #length = torch.sum(length)
+        length = torch.mean(length)
 
         # region
         label = label.float()
         c_in = torch.ones_like(predication)
         c_out = torch.zeros_like(predication)
-        region_in = torch.abs(torch.sum(predication * ((label - c_in) ** 2)))
+        #region_in = torch.abs(torch.sum(predication * ((label - c_in) ** 2)))
+        #region_out = torch.abs(
+        #    torch.sum((1 - predication) * ((label - c_out) ** 2)))
+        
+        
+        region_in = torch.abs(torch.mean(predication * ((label - c_in) ** 2)))
         region_out = torch.abs(
-            torch.sum((1 - predication) * ((label - c_out) ** 2)))
+            torch.mean((1 - predication) * ((label - c_out) ** 2)))
+                
         region = self.miu * region_in + region_out
 
         return region + length
@@ -72,15 +85,23 @@ class ACLossV2(nn.Module):
             min_pool_x, (3, 3), 1, 1) - min_pool_x)
 
         # length
-        length = torch.sum(torch.abs(contour))
+        #length = torch.sum(torch.abs(contour))
+        length = torch.mean(torch.abs(contour))
 
         # region
         label = label.float()
         c_in = torch.ones_like(predication)
         c_out = torch.zeros_like(predication)
-        region_in = torch.abs(torch.sum(predication * ((label - c_in) ** 2)))
+        
+        # region_in = torch.abs(torch.sum(predication * ((label - c_in) ** 2)))
+        # region_out = torch.abs(
+        #     torch.sum((1 - predication) * ((label - c_out) ** 2)))
+        
+        region_in = torch.abs(torch.mean(predication * ((label - c_in) ** 2)))
         region_out = torch.abs(
-            torch.sum((1 - predication) * ((label - c_out) ** 2)))
+            torch.mean((1 - predication) * ((label - c_out) ** 2)))
+
+        
         region = self.miu * region_in + region_out
 
         return region + length

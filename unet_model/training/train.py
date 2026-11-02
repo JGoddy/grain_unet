@@ -255,11 +255,14 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
     #Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
    
-    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 5.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
+    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 10.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
       
   #  loss = loss_fn(outputs, batch_labels) + 1e-3*Gaussian_outputs.mean()
   
-    #loss = loss_fn(outputs, batch_labels) + sigmoid_outputs.mean()  
+   # loss = loss_fn(outputs, batch_labels) + 1.0*sigmoid_outputs.mean()  
+    
+    
+    #loss = loss_fn(outputs, batch_labels) + 10*(torch.abs(sigmoid_outputs.mean() - batch_labels.mean()))
     
    # loss = loss_fn(straight_through_estimated_outputs, batch_labels)
     #loss = 100.0*loss_fn(outputs, batch_labels) if frac_sigmoid_binarized_pixels != 1.0 else loss_fn(outputs, batch_labels)
