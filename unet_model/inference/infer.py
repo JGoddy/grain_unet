@@ -35,7 +35,7 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     with torch.no_grad():
         model.eval()
         output = model(input_tensor)
-        output = torch.sigmoid(output)
+        output = torch.sigmoid(2.0 * output)
         output_np = output.squeeze().cpu().numpy()  # Remove batch dimension and move to CPU as a numpy array
 
     return output_np

@@ -235,7 +235,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
    # num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
    # frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
     
-    sigmoid_outputs = torch.sigmoid(outputs)
+    sigmoid_outputs = torch.sigmoid(2.0*outputs)
     
     # num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
     # frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
@@ -255,12 +255,12 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
     #Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
     
-    sigmoid_loss = torch.mean(sigmoid_outputs*(1.0 - sigmoid_outputs))
-    intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
+    #sigmoid_loss = torch.mean(sigmoid_outputs*(1.0 - sigmoid_outputs))
+    #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
-    #loss = loss_fn(outputs,batch_labels) + 1.55*sigmoid_outputs.mean() + 3.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
+    loss = loss_fn(outputs,batch_labels) + 0.8*sigmoid_outputs.mean() + 1.5*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
     
-    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 10*intermediate_values_loss
+    #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 10*intermediate_values_loss
     
       
   #  loss = loss_fn(outputs, batch_labels) + 1e-3*Gaussian_outputs.mean()
