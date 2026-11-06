@@ -258,7 +258,7 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #sigmoid_loss = torch.mean(sigmoid_outputs*(1.0 - sigmoid_outputs))
     #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
-    loss = loss_fn(outputs,batch_labels) + 0.8*sigmoid_outputs.mean() + 1.5*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
+    loss = loss_fn(outputs,batch_labels) + 0.5*sigmoid_outputs.mean() + 1.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
     
     #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 10*intermediate_values_loss
     
