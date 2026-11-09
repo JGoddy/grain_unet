@@ -15,6 +15,8 @@ import datetime
 init_training()
 import matplotlib.pyplot as plt
 
+from unet_model.losses.Skeaw_Bort_loss import SkeletonAwareWeight, calculate_class_weight, calc_back_skelen_torch, minus_torch, get_tfn, soft_dilate
+
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
 
 
@@ -235,7 +237,121 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
    # num_binarized_pixels = torch.where(outputs == 0.0)[0].shape[0] + torch.where(outputs == 1.0)[0].shape[0] 
    # frac_binarized_pixels = num_binarized_pixels/outputs.flatten().shape[0]
     
-    sigmoid_outputs = torch.sigmoid(2.0*outputs)
+    sigmoid_outputs = torch.sigmoid(outputs)
+    
+    
+    #skeaw part
+    # calculate weight map 
+    weight_func = SkeletonAwareWeight()
+    loss = 0 
+    
+    for i in range(len(batch_labels)):
+        
+        label = -1.0*(batch_labels[i] - 1.0)
+        sigmoid_output = -1.0*(sigmoid_outputs[i] - 1.0)
+    
+        weight_map = weight_func._get_weight(label.squeeze().cpu().numpy())
+    
+    
+        class_weight = calculate_class_weight(label)
+    
+    
+    
+    
+    # Bort part
+    
+        test_back, label_back_skelen, label_fore_skelen = calc_back_skelen_torch(label.to(device))
+    
+    
+    
+        pred_back, pred_back_skelen, pred_fore_skelen= calc_back_skelen_torch((sigmoid_output < 0.5).float().to(device))
+
+
+        #TODO: once the below fn, tp, etc. calculations are verified to work, 
+        # move them to a separate function in Skeaw_Bort_loss.py 
+        
+        #fn = minus_torch(batch_labels[i], sigmoid_outputs[i])  # fn  label = 1 & pred = 0
+        fp = minus_torch(sigmoid_output, label)  # fp  label = 0 & pred = 1
+        tn =  F.relu((1-label) - fp)  # tn label = 0 & pred = 0
+        #tp = F.relu(batch_labels - fn)   # tp label = 1 & pred = 1
+
+    
+        #tfn = get_tfn(sigmoid_outputs, batch_labels, pred_back_skelen, label_fore_skelen, get_conn=True)
+        tfp = get_tfn(label, sigmoid_output, label_back_skelen, pred_fore_skelen, get_conn=False)  # Swapping 'pred' and 'label' would change calculating TFN to calculating TFP
+    
+        
+        dilate_label = soft_dilate(label.unsqueeze(1)).squeeze(1)  # tolerate some offset
+        tfp[dilate_label > 0] = 0
+        
+        
+        ffp = minus_torch(fp, tfp)  # ffp = fp - tfp
+        #ffn = minus_torch(fn, tfn)  # ffn = fn - tfn
+        
+        logit = torch.softmax(sigmoid_output.reshape(1,1,outputs.shape[2],outputs.shape[3]), dim=2)
+        bort_weight_sum = 0.0
+
+        fp_prob = tn*(1-logit[:, 0, :, :])+class_weight[:, 1, :].unsqueeze(-1)*tfp*(1-logit[:, 0, :, :]) + ffp*(logit[:, 0, :, :])
+        bort_weight_sum += (tn.sum() + (class_weight[:, 1, :].unsqueeze(-1)*tfp).sum()+ffp.sum())
+        
+    
+    
+        
+        #loss = 0
+        weight_maps = torch.tensor(weight_map, device = batch_labels.device).unsqueeze(0).permute(0,3,1,2) # .float()
+        weight_sum = 0.0
+        obj_temp = None
+        w0 = 10
+        #d_iter = 2
+        
+        
+        ## calculate the skeleton-aware loss
+        ## TODO: maybe move this to a separate function in Skeaw_Bort_loss.py
+        
+        for idx in [1, 0]:
+            if idx == 0:  # object/background
+                mask = 1 - label.unsqueeze(0).float()  # B, C, W, H
+            else:
+                mask = label.unsqueeze(0).float()
+
+            wc = class_weight[:, idx, :].unsqueeze(-1)
+            this_weight = weight_maps[:, idx, :, :] 
+            
+
+            weight_map = w0 * this_weight + wc * mask[:, 0, :, :]   # formula(3) & (4) in paper
+
+
+
+                
+            if idx == 1:   # boundary
+                bck_weight = weight_maps[:, 0, :, :]*w0 + class_weight[:, 0, :].unsqueeze(-1)*(1-mask[:, 0, :, :])
+                label_dilate = soft_dilate(mask)
+                # if 'bort' not in method:
+                #     for _ in range(d_iter-1):
+                #         label_dilate = soft_dilate(label_dilate)
+                # else:  # defalut dilate=2
+                label_dilate = soft_dilate(label_dilate)
+                # print(' mask ', mask.size())
+                label_dilate = label_dilate[:, 0, :, :]
+                #  md in formula(2) in paper
+                obj_temp = ((1-weight_maps[:, 0, :, :])*w0 + wc*mask[:, 0, :, :]) * label_dilate
+                obj_temp[obj_temp <= bck_weight] = 0.0
+                weight_map += (obj_temp * (1-mask[:, 0, :, :]))
+                
+            if idx == 0:   #  md in formula(2) in paper
+                weight_map[obj_temp > weight_map] = 0.0
+                
+                
+            #print("weight map shape:", weight_map.shape)
+                
+            #loss += -1 * weight_map * (torch.log(logit[:, idx, :, :].reshape(weight_map.shape)) + eps)
+            #print("weight map sum", weight_map.sum())
+            weight_sum += weight_map.mean()   
+                
+                
+            loss_wp = weight_sum.mean()
+
+            bort_loss =  (fp_prob).sum() / bort_weight_sum
+            loss_wp += bort_loss
     
     # num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
     # frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
@@ -255,10 +371,13 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #Gaussian_dist = torch.distributions.normal.Normal(0.5,0.15)
     #Gaussian_outputs = torch.exp(Gaussian_dist.log_prob(sigmoid_outputs))
     
-    #sigmoid_loss = torch.mean(sigmoid_outputs*(1.0 - sigmoid_outputs))
+    sigmoid_loss = torch.mean(sigmoid_outputs*(1.0 - sigmoid_outputs))
     #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
-    loss = loss_fn(outputs,batch_labels) + 0.5*sigmoid_outputs.mean() + 1.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
+   
+    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + loss_wp
+   
+    #loss = loss_fn(outputs,batch_labels) + 0.5*sigmoid_outputs.mean() + 1.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
     
     #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 10*intermediate_values_loss
     
