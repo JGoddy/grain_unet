@@ -1,5 +1,6 @@
 #Standard Library Imports
 import torch
+from skimage import morphology
 import numpy as np
 import os
 from pathlib import Path
@@ -35,8 +36,9 @@ def run_inference(model:unet.UNet, image:str|Path|np.ndarray|torch.Tensor,
     with torch.no_grad():
         model.eval()
         output = model(input_tensor)
-        output = torch.sigmoid(2.0 * output)
+        output = torch.sigmoid(1.0 * output)
         output_np = output.squeeze().cpu().numpy()  # Remove batch dimension and move to CPU as a numpy array
+      #  output_np = -1.0*(morphology.skeletonize(output_np < 0.5) - 1.0)
 
     return output_np
 

@@ -15,6 +15,9 @@ import datetime
 init_training()
 import matplotlib.pyplot as plt
 
+from skimage import morphology
+
+
 from unet_model.losses.Skeaw_Bort_loss import SkeletonAwareWeight, calculate_class_weight, calc_back_skelen_torch, minus_torch, get_tfn, soft_dilate
 
 #--------------------------------------TRAINING STEP------------------------------------------------------------------------
@@ -37,7 +40,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn,
         # print("labels", labels.shape)
         #loss, outputs = training_step(images, labels, model, loss_fn, optimizer, device)    
 
-        train_loss = training_step(images, labels, model, loss_fn, optimizer, device) 
+        train_loss = training_step(images, labels, model, epoch, loss_fn, optimizer, device) 
         train_losses.append(train_loss.item())
 
 
@@ -99,7 +102,7 @@ def epoch(model, train_dataloader, val_dataloader, loss_fn,
     return train_loss
 
 
-def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device='cpu'):
+def training_step(batch_images, batch_labels, model, current_epoch, loss_fn, optimizer, device='cpu'):
     if device == 'cpu':
         raise ValueError("CPU is not supported for training. \n Please use a GPU for training.")
     model.train(True) 
@@ -240,118 +243,118 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     sigmoid_outputs = torch.sigmoid(outputs)
     
     
-    #skeaw part
-    # calculate weight map 
-    weight_func = SkeletonAwareWeight()
-    loss = 0 
+    # #skeaw part
+    # # calculate weight map 
+    # weight_func = SkeletonAwareWeight()
+    # loss = 0 
     
-    for i in range(len(batch_labels)):
+    # for i in range(len(batch_labels)):
         
-        label = -1.0*(batch_labels[i] - 1.0)
-        sigmoid_output = -1.0*(sigmoid_outputs[i] - 1.0)
+    #     label = -1.0*(batch_labels[i] - 1.0)
+    #     sigmoid_output = -1.0*(sigmoid_outputs[i] - 1.0)
     
-        weight_map = weight_func._get_weight(label.squeeze().cpu().numpy())
-    
-    
-        class_weight = calculate_class_weight(label)
+    #     weight_map = weight_func._get_weight(label.squeeze().cpu().numpy())
     
     
-    
-    
-    # Bort part
-    
-        test_back, label_back_skelen, label_fore_skelen = calc_back_skelen_torch(label.to(device))
+    #     class_weight = calculate_class_weight(label)
     
     
     
-        pred_back, pred_back_skelen, pred_fore_skelen= calc_back_skelen_torch((sigmoid_output < 0.5).float().to(device))
+    
+    # # Bort part
+    
+    #     test_back, label_back_skelen, label_fore_skelen = calc_back_skelen_torch(label.to(device))
+    
+    
+    
+    #     pred_back, pred_back_skelen, pred_fore_skelen= calc_back_skelen_torch((sigmoid_output < 0.5).float().to(device))
 
 
-        #TODO: once the below fn, tp, etc. calculations are verified to work, 
-        # move them to a separate function in Skeaw_Bort_loss.py 
+    #     #TODO: once the below fn, tp, etc. calculations are verified to work, 
+    #     # move them to a separate function in Skeaw_Bort_loss.py 
         
-        #fn = minus_torch(batch_labels[i], sigmoid_outputs[i])  # fn  label = 1 & pred = 0
-        fp = minus_torch(sigmoid_output, label)  # fp  label = 0 & pred = 1
-        tn =  F.relu((1-label) - fp)  # tn label = 0 & pred = 0
-        #tp = F.relu(batch_labels - fn)   # tp label = 1 & pred = 1
+    #     #fn = minus_torch(batch_labels[i], sigmoid_outputs[i])  # fn  label = 1 & pred = 0
+    #     fp = minus_torch(sigmoid_output, label)  # fp  label = 0 & pred = 1
+    #     tn =  F.relu((1-label) - fp)  # tn label = 0 & pred = 0
+    #     #tp = F.relu(batch_labels - fn)   # tp label = 1 & pred = 1
 
     
-        #tfn = get_tfn(sigmoid_outputs, batch_labels, pred_back_skelen, label_fore_skelen, get_conn=True)
-        tfp = get_tfn(label, sigmoid_output, label_back_skelen, pred_fore_skelen, get_conn=False)  # Swapping 'pred' and 'label' would change calculating TFN to calculating TFP
+    #     #tfn = get_tfn(sigmoid_outputs, batch_labels, pred_back_skelen, label_fore_skelen, get_conn=True)
+    #     tfp = get_tfn(label, sigmoid_output, label_back_skelen, pred_fore_skelen, get_conn=False)  # Swapping 'pred' and 'label' would change calculating TFN to calculating TFP
     
         
-        dilate_label = soft_dilate(label.unsqueeze(1)).squeeze(1)  # tolerate some offset
-        tfp[dilate_label > 0] = 0
+    #     dilate_label = soft_dilate(label.unsqueeze(1)).squeeze(1)  # tolerate some offset
+    #     tfp[dilate_label > 0] = 0
         
         
-        ffp = minus_torch(fp, tfp)  # ffp = fp - tfp
-        #ffn = minus_torch(fn, tfn)  # ffn = fn - tfn
+    #     ffp = minus_torch(fp, tfp)  # ffp = fp - tfp
+    #     #ffn = minus_torch(fn, tfn)  # ffn = fn - tfn
         
-        logit = torch.softmax(sigmoid_output.reshape(1,1,outputs.shape[2],outputs.shape[3]), dim=2)
-        bort_weight_sum = 0.0
+    #     logit = torch.softmax(sigmoid_output.reshape(1,1,outputs.shape[2],outputs.shape[3]), dim=2)
+    #     bort_weight_sum = 0.0
 
-        fp_prob = tn*(1-logit[:, 0, :, :])+class_weight[:, 1, :].unsqueeze(-1)*tfp*(1-logit[:, 0, :, :]) + ffp*(logit[:, 0, :, :])
-        bort_weight_sum += (tn.sum() + (class_weight[:, 1, :].unsqueeze(-1)*tfp).sum()+ffp.sum())
+    #     fp_prob = tn*(1-logit[:, 0, :, :])+class_weight[:, 1, :].unsqueeze(-1)*tfp*(1-logit[:, 0, :, :]) + ffp*(logit[:, 0, :, :])
+    #     bort_weight_sum += (tn.sum() + (class_weight[:, 1, :].unsqueeze(-1)*tfp).sum()+ffp.sum())
         
     
     
         
-        #loss = 0
-        weight_maps = torch.tensor(weight_map, device = batch_labels.device).unsqueeze(0).permute(0,3,1,2) # .float()
-        weight_sum = 0.0
-        obj_temp = None
-        w0 = 10
-        #d_iter = 2
+    #     #loss = 0
+    #     weight_maps = torch.tensor(weight_map, device = batch_labels.device).unsqueeze(0).permute(0,3,1,2) # .float()
+    #     weight_sum = 0.0
+    #     obj_temp = None
+    #     w0 = 10
+    #     #d_iter = 2
         
         
-        ## calculate the skeleton-aware loss
-        ## TODO: maybe move this to a separate function in Skeaw_Bort_loss.py
+    #     ## calculate the skeleton-aware loss
+    #     ## TODO: maybe move this to a separate function in Skeaw_Bort_loss.py
         
-        for idx in [1, 0]:
-            if idx == 0:  # object/background
-                mask = 1 - label.unsqueeze(0).float()  # B, C, W, H
-            else:
-                mask = label.unsqueeze(0).float()
+    #     for idx in [1, 0]:
+    #         if idx == 0:  # object/background
+    #             mask = 1 - label.unsqueeze(0).float()  # B, C, W, H
+    #         else:
+    #             mask = label.unsqueeze(0).float()
 
-            wc = class_weight[:, idx, :].unsqueeze(-1)
-            this_weight = weight_maps[:, idx, :, :] 
+    #         wc = class_weight[:, idx, :].unsqueeze(-1)
+    #         this_weight = weight_maps[:, idx, :, :] 
             
 
-            weight_map = w0 * this_weight + wc * mask[:, 0, :, :]   # formula(3) & (4) in paper
+    #         weight_map = w0 * this_weight + wc * mask[:, 0, :, :]   # formula(3) & (4) in paper
 
 
 
                 
-            if idx == 1:   # boundary
-                bck_weight = weight_maps[:, 0, :, :]*w0 + class_weight[:, 0, :].unsqueeze(-1)*(1-mask[:, 0, :, :])
-                label_dilate = soft_dilate(mask)
-                # if 'bort' not in method:
-                #     for _ in range(d_iter-1):
-                #         label_dilate = soft_dilate(label_dilate)
-                # else:  # defalut dilate=2
-                label_dilate = soft_dilate(label_dilate)
-                # print(' mask ', mask.size())
-                label_dilate = label_dilate[:, 0, :, :]
-                #  md in formula(2) in paper
-                obj_temp = ((1-weight_maps[:, 0, :, :])*w0 + wc*mask[:, 0, :, :]) * label_dilate
-                obj_temp[obj_temp <= bck_weight] = 0.0
-                weight_map += (obj_temp * (1-mask[:, 0, :, :]))
+    #         if idx == 1:   # boundary
+    #             bck_weight = weight_maps[:, 0, :, :]*w0 + class_weight[:, 0, :].unsqueeze(-1)*(1-mask[:, 0, :, :])
+    #             label_dilate = soft_dilate(mask)
+    #             # if 'bort' not in method:
+    #             #     for _ in range(d_iter-1):
+    #             #         label_dilate = soft_dilate(label_dilate)
+    #             # else:  # defalut dilate=2
+    #             label_dilate = soft_dilate(label_dilate)
+    #             # print(' mask ', mask.size())
+    #             label_dilate = label_dilate[:, 0, :, :]
+    #             #  md in formula(2) in paper
+    #             obj_temp = ((1-weight_maps[:, 0, :, :])*w0 + wc*mask[:, 0, :, :]) * label_dilate
+    #             obj_temp[obj_temp <= bck_weight] = 0.0
+    #             weight_map += (obj_temp * (1-mask[:, 0, :, :]))
                 
-            if idx == 0:   #  md in formula(2) in paper
-                weight_map[obj_temp > weight_map] = 0.0
-                
-                
-            #print("weight map shape:", weight_map.shape)
-                
-            #loss += -1 * weight_map * (torch.log(logit[:, idx, :, :].reshape(weight_map.shape)) + eps)
-            #print("weight map sum", weight_map.sum())
-            weight_sum += weight_map.mean()   
+    #         if idx == 0:   #  md in formula(2) in paper
+    #             weight_map[obj_temp > weight_map] = 0.0
                 
                 
-            loss_wp = weight_sum.mean()
+    #         #print("weight map shape:", weight_map.shape)
+                
+    #         #loss += -1 * weight_map * (torch.log(logit[:, idx, :, :].reshape(weight_map.shape)) + eps)
+    #         #print("weight map sum", weight_map.sum())
+    #         weight_sum += weight_map.mean()   
+                
+                
+    #         loss_wp = weight_sum.mean()
 
-            bort_loss =  (fp_prob).sum() / bort_weight_sum
-            loss_wp += bort_loss
+    #         bort_loss =  (fp_prob).sum() / bort_weight_sum
+    #         loss_wp += bort_loss
     
     # num_sigmoid_binarized_pixels = torch.where(sigmoid_outputs <= 0.1)[0].shape[0] + torch.where(sigmoid_outputs == 1.0)[0].shape[0] 
     # frac_sigmoid_binarized_pixels = num_sigmoid_binarized_pixels/sigmoid_outputs.flatten().shape[0]
@@ -375,8 +378,14 @@ def training_step(batch_images, batch_labels, model, loss_fn, optimizer, device=
     #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
    
-    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + loss_wp
-   
+    #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + loss_wp
+    
+    if current_epoch < 50: 
+        loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss
+    else:
+        #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1e-1*num_dangling_endpoints_test((sigmoid_outputs < 0.5), threshold=0.5)
+        loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1e-1*num_dangling_endpoints_test(-1.0*(torch.tensor(morphology.skeletonize(sigmoid_outputs.squeeze().detach().cpu().numpy() < 0.5)).float()-1.0).reshape(sigmoid_outputs.shape), threshold=0.5)
+      
     #loss = loss_fn(outputs,batch_labels) + 0.5*sigmoid_outputs.mean() + 1.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()
     
     #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 10*intermediate_values_loss
@@ -588,13 +597,13 @@ def get_kernel(device):
         _KERNEL_CACHE[device] = _NEIGHBOR_KERNEL.to(device)
     return _KERNEL_CACHE[device]
 
-def are_there_dangling_endpoints_test(tensor,threshold=0.95):
+def are_there_dangling_endpoints_test(tensor,threshold=0.5):
     """
     Detect dangling endpoints in a binary segmentation.
 
     Parameters
     ----------
-    image : (H,W) torch.Tensor
+    tensor : (B, C, H, W) torch.Tensor
         Tensor on either CPU or GPU.
         Pixels <= threshold are treated as boundary pixels.
 
@@ -606,30 +615,35 @@ def are_there_dangling_endpoints_test(tensor,threshold=0.95):
 
     mask = tensor <= threshold
 
+    B, C, H, W = mask.shape
+
     # Count 8-connected neighbors
     kernel = _NEIGHBOR_KERNEL.to(tensor.device)
 
     kernel = get_kernel(tensor.device)
 
+    kernel = kernel[None, None].expand(C, 1, 3, 3)
+
     neighbor_count = F.conv2d(
-        mask.float()[None, None],
-        kernel[None, None],
-        padding=1
-    )[0, 0]
+        mask.float(),
+        kernel,
+        padding=1,
+        groups=C
+    )
 
     # Ignore image border (same as original implementation)
-    C = mask[1:-1, 1:-1]
+    C = mask[:, :, 1:-1, 1:-1]
 
-    N  = mask[:-2, 1:-1]
-    NE = mask[:-2, 2:]
-    E  = mask[1:-1, 2:]
-    SE = mask[2:, 2:]
-    S  = mask[2:, 1:-1]
-    SW = mask[2:, :-2]
-    W  = mask[1:-1, :-2]
-    NW = mask[:-2, :-2]
+    N  = mask[:, :, :-2, 1:-1]
+    NE = mask[:, :, :-2, 2:]
+    E  = mask[:, :, 1:-1, 2:]
+    SE = mask[:, :, 2:, 2:]
+    S  = mask[:, :, 2:, 1:-1]
+    SW = mask[:, :, 2:, :-2]
+    W  = mask[:, :, 1:-1, :-2]
+    NW = mask[:, :, :-2, :-2]
 
-    nc = neighbor_count[1:-1, 1:-1]
+    nc = neighbor_count[:, :, 1:-1, 1:-1]
 
     #
     # One-neighbor endpoint
@@ -660,14 +674,230 @@ def are_there_dangling_endpoints_test(tensor,threshold=0.95):
     northwest_corner = N & NW & W  #E & NE & SE
     southeast_corner = S & SE & E #S & SW & SE
     southwest_corner  = S & SW & W #W & NW & SW
+    
+        
+    north_line = N & NE & NW
+    south_line = S & SE & SW
+    east_line = E & NE & SE
+    west_line = W & NW & SW
+    
 
     cond3 = (
         northeast_corner |
         northwest_corner |
         southeast_corner |
-        southwest_corner
+        southwest_corner |
+        north_line |
+        south_line |
+        east_line |
+        west_line
     )
 
     dangling3 = C & (nc == 3) & cond3
 
     return torch.any(dangling1 | dangling2 | dangling3)
+
+def num_dangling_endpoints_test(tensor,threshold=0.5):
+    """
+    Detect dangling endpoints in a binary segmentation.
+
+    Parameters
+    ----------
+    image : (H,W) torch.Tensor
+        Tensor on either CPU or GPU.
+        Pixels <= threshold are treated as boundary pixels.
+
+    Returns
+    -------
+    bool
+    """
+
+
+    mask = tensor <= threshold
+
+    B, C, H, W = mask.shape
+
+    # Count 8-connected neighbors
+    kernel = _NEIGHBOR_KERNEL.to(tensor.device)
+
+    kernel = get_kernel(tensor.device)
+    kernel = kernel[None, None].expand(C, 1, 3, 3)
+
+    neighbor_count = F.conv2d(
+        mask.float(),
+        kernel,
+        padding=1,
+        groups=C
+    )
+
+    # Ignore image border (same as original implementation)
+    C = mask[:, :, 1:-1, 1:-1]
+
+    N  = mask[:, :, :-2, 1:-1]
+    NE = mask[:, :, :-2, 2:]
+    E  = mask[:, :, 1:-1, 2:]
+    SE = mask[:, :, 2:, 2:]
+    S  = mask[:, :, 2:, 1:-1]
+    SW = mask[:, :, 2:, :-2]
+    W  = mask[:, :, 1:-1, :-2]
+    NW = mask[:, :, :-2, :-2]
+
+    nc = neighbor_count[:, :, 1:-1, 1:-1]
+
+    #
+    # One-neighbor endpoint
+    #
+    dangling1 = C & (nc == 1)
+
+    #
+    # Two-neighbor endpoint patterns
+    #
+    northwest_tip = (NW & N) | (NW & W)
+    northeast_tip = (NE & N) | (NE & E)
+    southwest_tip = (SW & S) | (SW & W)
+    southeast_tip = (SE & S) | (SE & E)
+
+    cond2 = (
+        northwest_tip |
+        northeast_tip |
+        southwest_tip |
+        southeast_tip
+    )
+
+    dangling2 = C & (nc == 2) & cond2
+
+    #
+    # Three-neighbor endpoint patterns
+    #
+    northeast_corner = N & NE & E #N & NW & NE
+    northwest_corner = N & NW & W  #E & NE & SE
+    southeast_corner = S & SE & E #S & SW & SE
+    southwest_corner  = S & SW & W #W & NW & SW
+    
+    north_line = N & NE & NW
+    south_line = S & SE & SW
+    east_line = E & NE & SE
+    west_line = W & NW & SW
+    
+    
+   
+
+    cond3 = (
+        northeast_corner |
+        northwest_corner |
+        southeast_corner |
+        southwest_corner |
+        north_line |
+        south_line |
+        east_line |
+        west_line
+    )
+
+    dangling3 = C & (nc == 3) & cond3
+
+    return torch.sum(dangling1 | dangling2 | dangling3)
+    # This will return the indices of the dangling endpoints in the tensor.
+
+
+def where_dangling_endpoints_test(tensor,threshold=0.5):
+    """
+    Detect dangling endpoints in a binary segmentation.
+
+    Parameters
+    ----------
+    image : (H,W) torch.Tensor
+        Tensor on either CPU or GPU.
+        Pixels <= threshold are treated as boundary pixels.
+
+    Returns
+    -------
+    bool
+    """
+
+
+    mask = tensor <= threshold
+
+    B, C, H, W = mask.shape
+
+    # Count 8-connected neighbors
+    kernel = _NEIGHBOR_KERNEL.to(tensor.device)
+
+    kernel = get_kernel(tensor.device)
+    kernel = kernel[None, None].expand(C, 1, 3, 3)
+
+
+
+    neighbor_count = F.conv2d(
+        mask.float(),
+        kernel,
+        padding=1,
+        groups=C
+    )
+
+    # Ignore image border (same as original implementation)
+    C = mask[:, :, 1:-1, 1:-1]
+
+    N  = mask[:, :, :-2, 1:-1]
+    NE = mask[:, :, :-2, 2:]
+    E  = mask[:, :, 1:-1, 2:]
+    SE = mask[:, :, 2:, 2:]
+    S  = mask[:, :, 2:, 1:-1]
+    SW = mask[:, :, 2:, :-2]
+    W  = mask[:, :, 1:-1, :-2]
+    NW = mask[:, :, :-2, :-2]
+
+    nc = neighbor_count[:, :, 1:-1, 1:-1]
+
+    #
+    # One-neighbor endpoint
+    #
+    dangling1 = C & (nc == 1)
+
+    #
+    # Two-neighbor endpoint patterns
+    #
+    northwest_tip = (NW & N) | (NW & W)
+    northeast_tip = (NE & N) | (NE & E)
+    southwest_tip = (SW & S) | (SW & W)
+    southeast_tip = (SE & S) | (SE & E)
+
+    cond2 = (
+        northwest_tip |
+        northeast_tip |
+        southwest_tip |
+        southeast_tip
+    )
+
+    dangling2 = C & (nc == 2) & cond2
+
+    #
+    # Three-neighbor endpoint patterns
+    #
+    northeast_corner = N & NE & E #N & NW & NE
+    northwest_corner = N & NW & W  #E & NE & SE
+    southeast_corner = S & SE & E #S & SW & SE
+    southwest_corner  = S & SW & W #W & NW & SW
+    
+    north_line = N & NE & NW
+    south_line = S & SE & SW
+    east_line = E & NE & SE
+    west_line = W & NW & SW
+    
+    
+   
+
+    cond3 = (
+        northeast_corner |
+        northwest_corner |
+        southeast_corner |
+        southwest_corner |
+        north_line |
+        south_line |
+        east_line |
+        west_line
+    )
+
+    dangling3 = C & (nc == 3) & cond3
+
+    return torch.where(dangling1 | dangling2 | dangling3)
+    # This will return the indices of the dangling endpoints in the tensor.
