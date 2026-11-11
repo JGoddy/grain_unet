@@ -12,7 +12,7 @@ class SoftSkeletonize(torch.nn.Module):
     def soft_erode(self, img):
 
         if len(img.shape)==4:
-            print("Good")
+            #print("Good")
             p1 = -F.max_pool2d(-img, (3,1), (1,1), (1,0))
             p2 = -F.max_pool2d(-img, (1,3), (1,1), (0,1))
             return torch.min(p1,p2)
