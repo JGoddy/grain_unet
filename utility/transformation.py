@@ -1,5 +1,7 @@
 
 from torchvision import transforms
+import torchvision.transforms.functional as TF
+import random
 import utility.settings as globals
 # Define transformations
 
@@ -25,6 +27,11 @@ def training_transforms(target_resolution:int=256, prob_flip = 1.0)->transforms.
         transforms.RandomVerticalFlip(prob_flip)  # Randomly flip the image vertically
         # If labels are categorical indices, consider using a custom transform to convert them to long tensor instead
     ])
+    
+    rotation = transforms.Compose([
+        transforms.Resize((target_resolution, target_resolution)),
+        transforms.Lambda(lambda img: TF.rotate(img, random.choice([90, 180, 270]))),
+    ])
 
     no_transform = transforms.Compose([
         # Converts to Tensor, assume labels can also be scaled to [0, 1]
@@ -32,7 +39,7 @@ def training_transforms(target_resolution:int=256, prob_flip = 1.0)->transforms.
         # If labels are categorical indices, consider using a custom transform to convert them to long tensor instead
     ])
 
-    other_transforms = None
+    #other_transforms = None
 
 
-    return {"horizontal_flip":horizontal_flip, "vertical_flip":vertical_flip, "no_transform":no_transform, "other_transforms":other_transforms}
+    return {"horizontal_flip":horizontal_flip, "vertical_flip":vertical_flip, "no_transform":no_transform, "rotation":rotation}

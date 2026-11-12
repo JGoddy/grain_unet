@@ -8,13 +8,13 @@ import configparser
 import cv2
 import torchvision.transforms.functional
 #for reading the config file 
-from utility.settings import *
+#from utility.settings import *
 import utility.file_manager as fm
 # Creating a custom dataset class 
 
 INVERT = False
 class ImageDataset(torch.utils.data.Dataset):
-    def __init__(self, image_dir:str, label_dir:str, vertical_flip = False, horizontal_flip = False, other_transforms = False, **kwargs):
+    def __init__(self, image_dir:str, label_dir:str, vertical_flip = False, horizontal_flip = False, other_transforms = False, augment_active = True, target_resolution = 256, invert = False, **kwargs):
         
         # made itmore robust to ignore non-image files
         self.image_dir = image_dir
@@ -36,6 +36,15 @@ class ImageDataset(torch.utils.data.Dataset):
         self.vertical_flip = vertical_flip
         self.horizontal_flip = horizontal_flip
         self.other_transforms = other_transforms
+        self.augment_active = augment_active
+        #self.target_resolution = target_resolution
+        self.invert = invert
+        
+        if isinstance(kwargs["transform"], dict):
+            self.vertical_flip = kwargs["transform"]["vertical_flip"]
+            self.horizontal_flip = kwargs["transform"]["horizontal_flip"]
+            self.rotation = kwargs["transform"]["rotation"]
+        
         self.to_tensor = torchvision.transforms.functional.to_tensor
         self.resize = torchvision.transforms.functional.resize
     def __len__(self):
@@ -53,21 +62,27 @@ class ImageDataset(torch.utils.data.Dataset):
         label_tensor = fm.load_image_tensor(label_path)
         
         # Apply random transformations with probability 0.5
-        if (self.horizontal_flip and bool(AUGMENT_ACTIVE) and np.random.rand() > 0.5):
-          image_tensor = self.vertical_flip(image_tensor)
-          label_tensor = self.vertical_flip(label_tensor)
-        if(self.vertical_flip and bool(AUGMENT_ACTIVE) and np.random.rand() > 0.5):
+        if (self.horizontal_flip and bool(self.augment_active) and np.random.rand() > 0.5):
+          image_tensor = self.horizontal_flip(image_tensor)
+          label_tensor = self.horizontal_flip(label_tensor)
+        if(self.vertical_flip and bool(self.augment_active) and np.random.rand() > 0.5):
            image_tensor = self.vertical_flip(image_tensor)
            label_tensor = self.vertical_flip(label_tensor)
-        if self.other_transforms:
-            for other_transform in self.other_transforms:
-                image_tensor = self.other_transform(image_tensor)
-                label_tensor = self.other_transform(label_tensor)
-                
-            image_tensor = self.resize((TARGET_RESOLUTION, TARGET_RESOLUTION))(image_tensor)
-            label_tensor = self.resize((TARGET_RESOLUTION, TARGET_RESOLUTION))(label_tensor)
+        # if self.other_transforms:
+        #     for other_transform in self.other_transforms:
+        #         image_tensor = self.other_transforms(image_tensor)
+        #         label_tensor = self.other_transforms(label_tensor)
+        if (self.rotation and bool(self.augment_active) and np.random.rand() > 0.5):
+            image_tensor = self.rotation(image_tensor)
+            label_tensor = self.rotation(label_tensor)    
+          
+            ## NOTE: resizing is part of all of the above transformations, so resizing 
+            # separately is not necessary.
+            
+            # image_tensor = self.resize((self.target_resolution, self.target_resolution))(image_tensor)
+            # label_tensor = self.resize((self.target_resolution, self.target_resolution))(label_tensor)
 
-        if INVERT:
+        if self.invert:
             label_tensor = 1 - label_tensor
 
         return image_tensor, label_tensor, self.image_files[index]
