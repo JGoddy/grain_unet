@@ -16,7 +16,8 @@ def get_train_data_loaders(image_path:str = 'training_data/nonuveaux_and_nuevo_i
     imageset = ImageDataset(
         image_dir=image_path,
         label_dir=label_path,
-        transform=transforms
+        transform=transforms,
+        augment_active=False
     )
 
     print('images found = ',imageset.__len__())
