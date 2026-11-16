@@ -378,15 +378,15 @@ def training_step(batch_images, batch_labels, model, current_epoch, loss_fn, opt
     #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
    
-    #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + loss_wp
+    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss #+ loss_wp
     
-    if current_epoch < 50: 
-        loss = loss_fn(outputs,batch_labels)[0] + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss
-    else:
+    #if current_epoch < 50: 
+    #    loss = loss_fn(outputs,batch_labels)[0] + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss
+    #else:
         #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1e-1*num_dangling_endpoints_test((sigmoid_outputs < 0.5), threshold=0.5)
-        where_dangling_endpoints = where_dangling_endpoints_test(sigmoid_outputs, threshold=0.5)
-        weighted_outputs = torch.zeros(sigmoid_outputs.shape, device=sigmoid_outputs.device) + sigmoid_outputs[where_dangling_endpoints]
-        loss = loss_fn(outputs,batch_labels)[0] + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1.0*loss_fn(weighted_outputs, batch_labels)[1]
+        #where_dangling_endpoints = where_dangling_endpoints_test(sigmoid_outputs, threshold=0.5)
+        #weighted_outputs = torch.zeros(sigmoid_outputs.shape, device=sigmoid_outputs.device) + sigmoid_outputs[where_dangling_endpoints]
+        #loss = loss_fn(outputs,batch_labels)[0] + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1.0*loss_fn(weighted_outputs, batch_labels)[1]
         #loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss + 1.0*num_dangling_endpoints_test(-1.0*(torch.tensor(morphology.skeletonize(sigmoid_outputs.squeeze().detach().cpu().numpy() < 0.5)).float()-1.0).reshape(sigmoid_outputs.shape), threshold=0.5)
       
     #loss = loss_fn(outputs,batch_labels) + 0.5*sigmoid_outputs.mean() + 1.0*(sigmoid_outputs*(1.0 - sigmoid_outputs)).mean()

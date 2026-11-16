@@ -166,15 +166,15 @@ def ACELoss(y_pred, y_true, u=1, a=1, b=1):
         c_out = torch.zeros_like(y_pred)
         
         #region_in = torch.abs(torch.sum(y_pred * ((label - c_in) ** 2)))
-        # region_in = torch.abs(torch.mean(y_pred * ((label - c_in) **2)))
+        region_in = torch.abs(torch.mean(y_pred * ((label - c_in) **2)))
         
-        region_in = torch.abs(y_pred * ((label - c_in) ** 2 ))
+        # region_in = torch.abs(y_pred * ((label - c_in) ** 2 ))
         
         # region_out = torch.abs(
         #     torch.sum((1 - y_pred) * ((label - c_out) ** 2)))
-        # region_out = torch.abs(
-        #      torch.mean((1 - y_pred) * ((label - c_out) ** 2)))
-        region_out = torch.abs((1 - y_pred) * ((label - c_out) ** 2))
+        region_out = torch.abs(
+             torch.mean((1 - y_pred) * ((label - c_out) ** 2)))
+        #region_out = torch.abs((1 - y_pred) * ((label - c_out) ** 2))
         
         
         
@@ -190,8 +190,8 @@ def ACELoss(y_pred, y_true, u=1, a=1, b=1):
                     (beta + cj ** 2) * cii - 2 * ci * cj * cij
         curvature = torch.abs(curvature) / ((ci ** 2 + cj ** 2) ** 1.5 + beta)
         #elastica = torch.sum((a + b * (curvature ** 2)) * torch.abs(length))
-        #elastica = torch.mean((a + b * (curvature ** 2)) * torch.abs(length))
-        elastica = (a + b * (curvature ** 2)) * torch.abs(length)
+        elastica = torch.mean((a + b * (curvature ** 2)) * torch.abs(length))
+        #elastica = (a + b * (curvature ** 2)) * torch.abs(length)
 
         return elastica
 
