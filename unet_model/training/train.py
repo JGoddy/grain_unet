@@ -378,7 +378,7 @@ def training_step(batch_images, batch_labels, model, current_epoch, loss_fn, opt
     #intermediate_values_loss = torch.sum((sigmoid_outputs > 0.4) & (sigmoid_outputs < 0.6))
    
    
-    loss = loss_fn(outputs,batch_labels) + 1.0*sigmoid_outputs.mean() + 2.0*sigmoid_loss #+ loss_wp
+    loss = loss_fn(outputs,batch_labels) + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss #+ loss_wp
     
     #if current_epoch < 50: 
     #    loss = loss_fn(outputs,batch_labels)[0] + 1.5*sigmoid_outputs.mean() + 2.0*sigmoid_loss
