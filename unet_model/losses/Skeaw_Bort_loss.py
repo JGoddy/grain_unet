@@ -1,10 +1,12 @@
-from skimage import measure
-from skimage import morphology
-import scipy.ndimage as ndimage
+# from skimage import measure
+# from skimage import morphology
+#import scipy.ndimage as ndimage
+from cupyx.scipy import ndimage
 import math
 import torch
 import torch.nn.functional as F
 import numpy as np
+import cupy as cp
 from typing import Callable, Iterable, List, Set, Tuple
 import time
 
@@ -21,21 +23,28 @@ def calc_back_skelen_torch(x):
     B, H, W = x.size()
     x_b_skelen = torch.zeros((B, H, W)).to(x.device)
     x_f_skelen = torch.zeros((B, H, W)).to(x.device)
-    x_np = x.cpu().detach().numpy()
+    #x_np = x.cpu().detach().numpy()
+    x_cp = cp.asarray(x)
     for i in range(B):
-        a = x_np[i, :, :]
-        skelen = np.zeros_like(a)
-        mask_label, label_num = measure.label(a, connectivity=1, background=1, return_num=True) # label it
-        image_props = measure.regionprops(mask_label, cache=False) # get regions props
+        #a = x_np[i, :, :]
+        #skelen = np.zeros_like(a)
+        a = x_cp[i, :, :]
+        skelen = cp.zeros_like(a)
+        # mask_label, label_num = measure.label(a, connectivity=1, background=1, return_num=True) # label it
+        # image_props = measure.regionprops(mask_label, cache=False) # get regions props
+        
+        mask_label, label_num = ndimage.label(a, connectivity=1, background=1, return_num=True) # label it
+        image_props = ndimage.regionprops(mask_label, cache=False) # get regions props
 
-        fore_sk = a 
-        #fore_sk = morphology.skeletonize(a, method="lee") #/255 # Lee Skeleton method   # fore skelen
+        #fore_sk = a 
+        fore_sk = morphology.skeletonize(a, method="lee") #/255 # Lee Skeleton method   # fore skelen
         x_f_skelen[i, :, :] = torch.from_numpy(fore_sk).to(x.device)
 
         for li in range(label_num):
             image_prop = image_props[li]
             (min_row, min_col, max_row, max_col) = image_prop.bbox
-            bool_sub = np.zeros(image_prop.image.shape)
+            #bool_sub = np.zeros(image_prop.image.shape)
+            bool_sub = cp.zeros(image_prop.image.shape)
             bool_sub[image_prop.image] = 1.0
 
             #bool_sub_sk = morphology.skeletonize(bool_sub, method="lee") #/255 # Lee Skeleton method
@@ -46,7 +55,8 @@ def calc_back_skelen_torch(x):
             # plt.subplot(1,2,1), plt.imshow(bool_sub, cmap='gray'), plt.axis("off"), plt.title('bool_sub', fontsize=24)
             # plt.subplot(1,2,2), plt.imshow(bool_sub_sk, cmap='gray'), plt.axis("off"), plt.title('bool_sub_sk', fontsize=24)
             # plt.show()
-        x_b_skelen[i, :, :] = torch.from_numpy(skelen).to(x.device)  # back skelen
+        #x_b_skelen[i, :, :] = torch.from_numpy(skelen).to(x.device)  # back skelen
+        x_b_skelen[i, :, :] = torch.as_tensor(skelen) #.to(x.device)
     return x_b_skelen, soft_dilate(x_b_skelen.unsqueeze(1)).squeeze(1), x_f_skelen
 
 
@@ -60,12 +70,17 @@ def minus_torch(a, b):
 def get_tfn_conn_torch(fn, tfn):
     B, H, W = tfn.size()
     tfn_conn = torch.zeros((B, H, W)).to(tfn.device)
-    fn_np = fn.cpu().detach().numpy() 
-    tfn_np = tfn.cpu().detach().numpy()
+    # fn_np = fn.cpu().detach().numpy() 
+    # tfn_np = tfn.cpu().detach().numpy()
+    fn_cp = cp.asarray(fn)
+    tfn_cp = cp.asarray(tfn)
     for i in range(B):
-        fn = fn_np[i, :, :]
-        tfn = tfn_np[i, :, :]
-        ttfn = np.zeros_like(fn)
+        # fn = fn_np[i, :, :]
+        # tfn = tfn_np[i, :, :]
+        fn = fn_cp[i, :, :]
+        tfn = tfn_cp[i, :, :]
+        #ttfn = np.zeros_like(fn)
+        ttfn = cp.zeros_like(fn)
         mask_label, label_num = measure.label(fn, connectivity=1, background=0, return_num=True) 
         image_props = measure.regionprops(mask_label, cache=False) 
         for li in range(label_num):
